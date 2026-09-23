@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Receipt to AutoCount</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        margin: 0;
+        padding: 30px;
+        color: #222;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: auto;
+    }
+
+    h1 {
+        margin-bottom: 5px;
+    }
+
+    .subtitle {
+        color: #666;
+        margin-top: 0;
+    }
+
+    .panel {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    input[type="file"] {
+        width: 100%;
+        padding: 12px;
+        border: 2px dashed #aaa;
+        border-radius: 8px;
+        background: #fafafa;
+    }
+
+    button {
+        padding: 11px 18px;
+        border: none;
+        border-radius: 7px;
+        cursor: pointer;
+        margin: 5px 5px 5px 0;
+        font-size: 14px;
+    }
+
+    .primary {
+        background: #2563eb;
+        color: white;
+    }
+
+    .secondary {
+        background: #e5e7eb;
+        color: #111;
+    }
+
+    .danger {
+        background: #dc2626;
+        color: white;
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .progress {
+        margin-top: 15px;
+        padding: 12px;
+        background: #f1f5f9;
+        border-radius: 8px;
+    }
+
+    .result {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+        background: #fff;
+    }
+
+    .result.error {
+        border-color: #ef4444;
+        background: #fff5f5;
+    }
+
+    .result-number {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    .field {
+        margin: 5px 0;
+    }
+
+    .field strong {
+        display: inline-block;
+        width: 90px;
+    }
+
+    .autocount {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f3f4f6;
+        border-radius: 6px;
+        font-family: monospace;
+        word-break: break-word;
+    }
+
+    textarea {
+        width: 100%;
+        min-height: 250px;
+        padding: 12px;
+        font-family: monospace;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        resize: vertical;
+    }
+
+    .stats {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+    }
+
+    .stat {
+        background: #f8fafc;
+        padding: 10px 15px;
+        border-radius: 8px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Receipt → AutoCount</h1>
+
+    <p class="subtitle">
+        Extract company, item, date and price from up to 30 receipts per Gemini request.
+    </p>
+
+    <div class="panel">
+
+        <input
+            type="file"
+            id="fileInput"
+            accept="image/*"
+            multiple
+        >
+
+        <div style="margin-top:15px;">
+
+            <button
+                id="processBtn"
+                class="primary"
+                onclick="processReceipts()"
+            >
+                Process Receipts
+            </button>
+
+            <button
+                class="secondary"
+                onclick="copyAutoCount()"
+            >
+                Copy AutoCount
+            </button>
+
+            <button
+                class="secondary"
+                onclick="downloadAutoCount()"
+            >
+                Download TXT
+            </button>
+
+            <button
+                class="danger"
+                onclick="clearAll()"
+            >
+                Clear
+            </button>
+
+        </div>
+
+        <div class="stats">
+
+            <div class="stat">
+                Selected:
+                <strong id="selectedCount">0</strong>
+            </div>
+
+            <div class="stat">
+                Processed:
+                <strong id="processedCount">0</strong>
+            </div>
+
+            <div class="stat">
+                Successful:
+                <strong id="successCount">0</strong>
+            </div>
+
+            <div class="stat">
+                Failed:
+                <strong id="failedCount">0</strong>
+            </div>
+
+        </div>
+
+        <div
+            id="progress"
+            class="progress"
+            style="display:none;"
+        ></div>
+
+    </div>
+
+
+    <div class="panel">
+
+        <h2>Results</h2>
+
+        <div id="results">
+
+            <p style="color:#777;">
+                No receipts processed yet.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="panel">
+
+        <h2>AutoCount Output</h2>
+
+        <textarea
+            id="autocountOutput"
+            placeholder="AutoCount lines will appear here..."
+        ></textarea>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   CONFIGURATION
+   ========================================================= */
+
+const API_KEY =
+    'AQ.Ab8RN6KgPbNbiB66TMz9wTx2nj6d5n_fsOuEWt37V_BqQzTv7Q';
+
+
+const MODEL =
+    'gemini-3.5-flash-lite';
+
+
+const ENDPOINT =
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+
+
+/*
+    30 receipts per request.
+*/
+
+const BATCH_SIZE = 30;
+
+
+/*
+    Wait 15 seconds between batches.
+*/
+
+const DELAY_BETWEEN_BATCHES = 15000;
+
+
+/*
+    Maximum image dimension.
+*/
+
+const MAX_IMAGE_SIZE = 1200;
+
+
+/*
+    JPEG quality.
+*/
+
+const JPEG_QUALITY = 0.70;
+
+
+/*
+    Maximum retry attempts.
+*/
+
+const MAX_RETRIES = 4;
+
+
+/*
+    Google Apps Script Web App URL.
+*/
+
+const GOOGLE_SHEET_URL =
+    'https://script.google.com/macros/s/AKfycbxGYlLkkvFXLxtLTjJMn7DVpPLQR4QASmR7W9ZKlr150muzI5ywiNictWe15jrYohC9ww/exec';
+
+
+/* =========================================================
+   STATE
+   ========================================================= */
+
+let selectedFiles = [];
+
+let results = [];
+
+
+/* =========================================================
+   FILE SELECTION
+   ========================================================= */
+
+document.getElementById('fileInput').addEventListener(
+    'change',
+    function(event) {
+
+        selectedFiles =
+            Array.from(event.target.files);
+
+        results = [];
+
+        updateStats();
+
+        document.getElementById(
+            'results'
+        ).innerHTML =
+            selectedFiles.length
+                ? `<p>${selectedFiles.length} receipt(s) selected.</p>`
+                : `<p style="color:#777;">No receipts selected.</p>`;
+    }
+);
+
+
+/* =========================================================
+   IMAGE RESIZING
+   ========================================================= */
+
+function resizeImage(file) {
+
+    return new Promise((resolve, reject) => {
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            function(event) {
+
+                const img =
+                    new Image();
+
+
+                img.onload =
+                    function() {
+
+                        let width =
+                            img.width;
+
+                        let height =
+                            img.height;
+
+
+                        if (
+                            width > MAX_IMAGE_SIZE ||
+                            height > MAX_IMAGE_SIZE
+                        ) {
+
+                            const scale =
+                                Math.min(
+                                    MAX_IMAGE_SIZE / width,
+                                    MAX_IMAGE_SIZE / height
+                                );
+
+                            width =
+                                Math.round(
+                                    width * scale
+                                );
+
+                            height =
+                                Math.round(
+                                    height * scale
+                                );
+                        }
+
+
+                        const canvas =
+                            document.createElement(
+                                'canvas'
+                            );
+
+
+                        canvas.width =
+                            width;
+
+                        canvas.height =
+                            height;
+
+
+                        const ctx =
+                            canvas.getContext(
+                                '2d'
+                            );
+
+
+                        ctx.drawImage(
+                            img,
+                            0,
+                            0,
+                            width,
+                            height
+                        );
+
+
+                        const dataUrl =
+                            canvas.toDataURL(
+                                'image/jpeg',
+                                JPEG_QUALITY
+                            );
+
+
+                        resolve({
+
+                            mimeType:
+                                'image/jpeg',
+
+                            data:
+                                dataUrl.split(',')[1]
+
+                        });
+                    };
+
+
+                img.onerror =
+                    () => {
+
+                        reject(
+                            new Error(
+                                'Unable to read image.'
+                            )
+                        );
+                    };
+
+
+                img.src =
+                    event.target.result;
+            };
+
+
+        reader.onerror =
+            () => {
+
+                reject(
+                    new Error(
+                        'Unable to load file.'
+                    )
+                );
+            };
+
+
+        reader.readAsDataURL(file);
+    });
+}
+
+
+/* =========================================================
+   DELAY
+   ========================================================= */
+
+function sleep(ms) {
+
+    return new Promise(
+        resolve =>
+            setTimeout(resolve, ms)
+    );
+}
+
+
+/* =========================================================
+   GEMINI REQUEST
+   ========================================================= */
+
+async function sendBatchToGemini(
+    batch,
+    startIndex
+) {
+
+    const parts = [];
+
+
+    parts.push({
+
+        text: `
+
+You are processing Malaysian business receipts.
+
+For EVERY receipt image, extract:
+
+1. company
+2. item
+3. date
+4. price
+
+Return EXACTLY one JSON object for each receipt.
+
+The order MUST match the receipt order.
+
+Return ONLY valid JSON.
+
+Do not include markdown.
+Do not include explanations.
+Do not include extra text.
+
+Required format:
+
+[
+  {
+    "company": "COMPANY NAME",
+    "item": "ITEM DESCRIPTION",
+    "date": "DD.MM.YY",
+    "price": "0.00"
+  }
+]
+
+Rules:
+
+- company = merchant/company shown on the receipt
+- item = the main purchased item or best useful description of the purchase
+- date = transaction date
+- price = TOTAL amount paid for the receipt
+- Use the final total/grand total amount, not subtotal
+- Return price with 2 decimal places
+- Convert dates to DD.MM.YY
+- ALL TEXT MUST BE IN CAPITAL LETTERS
+- If something cannot be identified, use "UNKNOWN"
+- Do not invent information
+- Return exactly ${batch.length} objects.
+
+`
+    });
+
+
+    for (
+        let i = 0;
+        i < batch.length;
+        i++
+    ) {
+
+        const file =
+            batch[i];
+
+
+        parts.push({
+
+            text:
+                `RECEIPT ${startIndex + i + 1}`
+
+        });
+
+
+        const image =
+            await resizeImage(file);
+
+
+        parts.push({
+
+            inline_data: {
+
+                mime_type:
+                    image.mimeType,
+
+                data:
+                    image.data
+
+            }
+
+        });
+    }
+
+
+    const requestBody = {
+
+        contents: [
+
+            {
+
+                role: 'user',
+
+                parts:
+                    parts
+
+            }
+
+        ],
+
+        generationConfig: {
+
+            temperature: 0,
+
+            responseMimeType:
+                'application/json'
+
+        }
+
+    };
+
+
+    let lastError =
+        null;
+
+
+    for (
+        let attempt = 0;
+        attempt <= MAX_RETRIES;
+        attempt++
+    ) {
+
+        try {
+
+            const response =
+                await fetch(
+                    ENDPOINT,
+                    {
+
+                        method:
+                            'POST',
+
+                        headers: {
+
+                            'Content-Type':
+                                'application/json'
+
+                        },
+
+                        body:
+                            JSON.stringify(
+                                requestBody
+                            )
+
+                    }
+                );
+
+
+            const text =
+                await response.text();
+
+
+            if (!response.ok) {
+
+                let message =
+                    text;
+
+
+                try {
+
+                    const errorJson =
+                        JSON.parse(text);
+
+
+                    message =
+                        errorJson?.error?.message ||
+                        text;
+
+                } catch (_) {}
+
+
+                if (
+                    response.status === 429 &&
+                    /quota|daily|rpd/i.test(
+                        message
+                    )
+                ) {
+
+                    throw new Error(
+                        `DAILY QUOTA EXCEEDED: ${message}`
+                    );
+                }
+
+
+                if (
+                    (
+                        response.status === 429 ||
+                        response.status === 503
+                    ) &&
+                    attempt < MAX_RETRIES
+                ) {
+
+                    const wait =
+                        Math.pow(
+                            2,
+                            attempt
+                        ) * 5000;
+
+
+                    updateProgress(
+                        `Temporary API limit. Waiting ${Math.round(wait / 1000)} seconds before retry...`
+                    );
+
+
+                    await sleep(wait);
+
+                    continue;
+                }
+
+
+                throw new Error(
+                    `HTTP ${response.status}: ${message}`
+                );
+            }
+
+
+            const data =
+                JSON.parse(text);
+
+
+            const generatedText =
+                data
+                    ?.candidates?.[0]
+                    ?.content?.parts
+                    ?.map(
+                        p => p.text || ''
+                    )
+                    .join('');
+
+
+            if (!generatedText) {
+
+                throw new Error(
+                    'Gemini returned an empty response.'
+                );
+            }
+
+
+            const cleaned =
+                generatedText
+                    .replace(
+                        /```json/gi,
+                        ''
+                    )
+                    .replace(
+                        /```/g,
+                        ''
+                    )
+                    .trim();
+
+
+            const parsed =
+                JSON.parse(cleaned);
+
+
+            if (!Array.isArray(parsed)) {
+
+                throw new Error(
+                    'Gemini response was not an array.'
+                );
+            }
+
+
+            if (
+                parsed.length !==
+                batch.length
+            ) {
+
+                throw new Error(
+                    `Expected ${batch.length} results but received ${parsed.length}.`
+                );
+            }
+
+
+            return parsed;
+
+
+        } catch (error) {
+
+            lastError =
+                error;
+
+
+            if (
+                /DAILY QUOTA EXCEEDED/i.test(
+                    error.message
+                )
+            ) {
+
+                throw error;
+            }
+
+
+            if (
+                attempt >= MAX_RETRIES
+            ) {
+
+                throw error;
+            }
+
+
+            const wait =
+                Math.pow(
+                    2,
+                    attempt
+                ) * 5000;
+
+
+            updateProgress(
+                `Error. Retrying in ${Math.round(wait / 1000)} seconds...`
+            );
+
+
+            await sleep(wait);
+        }
+    }
+
+
+    throw lastError ||
+        new Error(
+            'Unknown Gemini error.'
+        );
+}
+
+
+/* =========================================================
+   GOOGLE SHEETS
+   ========================================================= */
+
+async function saveToGoogleSheet(
+    records
+) {
+
+    const validRecords =
+        records
+            .filter(
+                record =>
+                    record.success
+            )
+            .map(
+                record => ({
+
+                    date:
+                        record.date
+                            .toUpperCase(),
+
+                    company:
+                        record.company
+                            .toUpperCase(),
+
+                    item:
+                        record.item
+                            .toUpperCase(),
+
+                    price:
+                        record.price,
+
+                    autocount:
+                        makeAutoCountLine(
+                            record
+                        ),
+
+                    filename:
+                        record.filename,
+
+                    success:
+                        true
+
+                })
+            );
+
+
+    if (
+        validRecords.length === 0
+    ) {
+
+        return;
+    }
+
+
+    if (
+        !GOOGLE_SHEET_URL ||
+        GOOGLE_SHEET_URL ===
+            'PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
+    ) {
+
+        throw new Error(
+            'Google Sheets URL has not been configured.'
+        );
+    }
+
+
+    await fetch(
+        GOOGLE_SHEET_URL,
+        {
+
+            method:
+                'POST',
+
+            mode:
+                'no-cors',
+
+            headers: {
+
+                'Content-Type':
+                    'text/plain;charset=utf-8'
+
+            },
+
+            body:
+                JSON.stringify({
+
+                    records:
+                        validRecords
+
+                })
+
+        }
+    );
+}
+
+
+/* =========================================================
+   PROCESS ALL RECEIPTS
+   ========================================================= */
+
+async function processReceipts() {
+
+    if (
+        !API_KEY ||
+        API_KEY ===
+            'PASTE_NEW_API_KEY_HERE'
+    ) {
+
+        alert(
+            'Please enter your NEW Gemini API key first.'
+        );
+
+        return;
+    }
+
+
+    if (
+        selectedFiles.length === 0
+    ) {
+
+        alert(
+            'Please select some receipt images first.'
+        );
+
+        return;
+    }
+
+
+    const processButton =
+        document.getElementById(
+            'processBtn'
+        );
+
+
+    processButton.disabled =
+        true;
+
+
+    results = [];
+
+
+    document.getElementById(
+        'results'
+    ).innerHTML =
+        '';
+
+
+    const total =
+        selectedFiles.length;
+
+
+    let success =
+        0;
+
+    let failed =
+        0;
+
+
+    try {
+
+        for (
+            let start = 0;
+            start < total;
+            start += BATCH_SIZE
+        ) {
+
+            const end =
+                Math.min(
+                    start + BATCH_SIZE,
+                    total
+                );
+
+
+            const batch =
+                selectedFiles.slice(
+                    start,
+                    end
+                );
+
+
+            updateProgress(
+                `Processing receipts ${start + 1}–${end} of ${total}...`
+            );
+
+
+            try {
+
+                const extracted =
+                    await sendBatchToGemini(
+                        batch,
+                        start
+                    );
+
+
+                for (
+                    let i = 0;
+                    i < batch.length;
+                    i++
+                ) {
+
+                    const data =
+                        extracted[i];
+
+
+                    const item =
+                        cleanValue(
+                            data.item
+                        ).toUpperCase();
+
+
+                    const company =
+                        cleanValue(
+                            data.company
+                        ).toUpperCase();
+
+
+                    const date =
+                        cleanValue(
+                            data.date
+                        ).toUpperCase();
+
+
+                    const price =
+                        cleanValue(
+                            data.price
+                        );
+
+
+                    const isValid =
+                        item !== 'UNKNOWN' &&
+                        company !== 'UNKNOWN' &&
+                        date !== 'UNKNOWN' &&
+                        price !== 'UNKNOWN';
+
+
+                    const record = {
+
+                        filename:
+                            batch[i].name,
+
+                        company:
+                            company,
+
+                        item:
+                            item,
+
+                        date:
+                            date,
+
+                        price:
+                            price,
+
+                        success:
+                            isValid,
+
+                        error:
+                            isValid
+                                ? ''
+                                : 'One or more fields could not be identified.'
+
+                    };
+
+
+                    results.push(
+                        record
+                    );
+
+
+                    if (
+                        isValid
+                    ) {
+
+                        success++;
+
+                    } else {
+
+                        failed++;
+                    }
+                }
+
+
+            } catch (error) {
+
+                for (
+                    let i = 0;
+                    i < batch.length;
+                    i++
+                ) {
+
+                    results.push({
+
+                        filename:
+                            batch[i].name,
+
+                        company:
+                            'ERROR',
+
+                        item:
+                            'ERROR',
+
+                        date:
+                            '',
+
+                        price:
+                            '',
+
+                        success:
+                            false,
+
+                        error:
+                            error.message
+
+                    });
+
+
+                    failed++;
+                }
+
+
+                if (
+                    /DAILY QUOTA EXCEEDED/i.test(
+                        error.message
+                    )
+                ) {
+
+                    updateProgress(
+                        'Daily quota reached. Processing stopped so no more requests are wasted.'
+                    );
+
+                    break;
+                }
+            }
+
+
+            updateStats();
+
+            renderResults();
+
+            updateAutoCount();
+
+
+            if (
+                end < total
+            ) {
+
+                updateProgress(
+                    `Batch complete. Waiting ${DELAY_BETWEEN_BATCHES / 1000} seconds before the next batch...`
+                );
+
+
+                await sleep(
+                    DELAY_BETWEEN_BATCHES
+                );
+            }
+        }
+
+
+        /*
+            SAVE TO GOOGLE SHEETS
+        */
+
+        try {
+
+            await saveToGoogleSheet(
+                results
+            );
+
+
+            updateProgress(
+                `Finished. ${success} successful, ${failed} failed. Saved to Google Sheets.`
+            );
+
+
+        } catch (sheetError) {
+
+            console.error(
+                'Google Sheets error:',
+                sheetError
+            );
+
+
+            updateProgress(
+                `Finished. ${success} successful, ${failed} failed. Google Sheets save could not be confirmed.`
+            );
+        }
+
+
+    } finally {
+
+        processButton.disabled =
+            false;
+
+        updateStats();
+    }
+}
+
+
+/* =========================================================
+   CLEAN VALUES
+   ========================================================= */
+
+function cleanValue(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        String(value).trim() === ''
+    ) {
+
+        return 'UNKNOWN';
+    }
+
+
+    return String(
+        value
+    ).trim();
+}
+
+
+/* =========================================================
+   AUTOCOUNT LINE
+   ========================================================= */
+
+function makeAutoCountLine(
+    record
+) {
+
+    if (
+        !record.success
+    ) {
+
+        return '';
+    }
+
+
+    return (
+        `BEING PURCHASE OF ${record.item.toUpperCase()} - ` +
+        `${record.company.toUpperCase()} - ` +
+        `${record.date.toUpperCase()}`
+    );
+}
+
+
+/* =========================================================
+   UPDATE AUTOCOUNT
+   ========================================================= */
+
+function updateAutoCount() {
+
+    const lines =
+        results
+            .filter(
+                r => r.success
+            )
+            .map(
+                makeAutoCountLine
+            )
+            .filter(
+                Boolean
+            );
+
+
+    document.getElementById(
+        'autocountOutput'
+    ).value =
+        lines.join('\n');
+}
+
+
+/* =========================================================
+   RENDER RESULTS
+   ========================================================= */
+
+function renderResults() {
+
+    const container =
+        document.getElementById(
+            'results'
+        );
+
+
+    if (
+        results.length === 0
+    ) {
+
+        container.innerHTML =
+            '<p style="color:#777;">No results.</p>';
+
+        return;
+    }
+
+
+    container.innerHTML =
+        results
+            .map(
+                (r, index) => {
+
+                    if (
+                        !r.success
+                    ) {
+
+                        return `
+
+                            <div class="result error">
+
+                                <div class="result-number">
+                                    Receipt ${index + 1}
+                                </div>
+
+                                <div class="field">
+                                    <strong>File:</strong>
+                                    ${escapeHtml(r.filename)}
+                                </div>
+
+                                <div class="field">
+                                    <strong>Error:</strong>
+                                    ${escapeHtml(r.error)}
+                                </div>
+
+                            </div>
+
+                        `;
+                    }
+
+
+                    return `
+
+                        <div class="result">
+
+                            <div class="result-number">
+                                Receipt ${index + 1}
+                            </div>
+
+                            <div class="field">
+                                <strong>File:</strong>
+                                ${escapeHtml(r.filename)}
+                            </div>
+
+                            <div class="field">
+                                <strong>Company:</strong>
+                                ${escapeHtml(r.company)}
+                            </div>
+
+                            <div class="field">
+                                <strong>Item:</strong>
+                                ${escapeHtml(r.item)}
+                            </div>
+
+                            <div class="field">
+                                <strong>Date:</strong>
+                                ${escapeHtml(r.date)}
+                            </div>
+
+                            <div class="field">
+                                <strong>Price:</strong>
+                                RM ${escapeHtml(r.price)}
+                            </div>
+
+                            <div class="autocount">
+                                ${escapeHtml(
+                                    makeAutoCountLine(r)
+                                )}
+                            </div>
+
+                        </div>
+
+                    `;
+                }
+            )
+            .join('');
+}
+
+
+/* =========================================================
+   HTML ESCAPE
+   ========================================================= */
+
+function escapeHtml(
+    value
+) {
+
+    return String(value)
+        .replace(
+            /&/g,
+            '&amp;'
+        )
+        .replace(
+            /</g,
+            '&lt;'
+        )
+        .replace(
+            />/g,
+            '&gt;'
+        )
+        .replace(
+            /"/g,
+            '&quot;'
+        )
+        .replace(
+            /'/g,
+            '&#039;'
+        );
+}
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+function updateProgress(
+    message
+) {
+
+    const element =
+        document.getElementById(
+            'progress'
+        );
+
+
+    element.style.display =
+        'block';
+
+
+    element.textContent =
+        message;
+}
+
+
+/* =========================================================
+   STATS
+   ========================================================= */
+
+function updateStats() {
+
+    document.getElementById(
+        'selectedCount'
+    ).textContent =
+        selectedFiles.length;
+
+
+    document.getElementById(
+        'processedCount'
+    ).textContent =
+        results.length;
+
+
+    document.getElementById(
+        'successCount'
+    ).textContent =
+        results.filter(
+            r => r.success
+        ).length;
+
+
+    document.getElementById(
+        'failedCount'
+    ).textContent =
+        results.filter(
+            r => !r.success
+        ).length;
+}
+
+
+/* =========================================================
+   COPY
+   ========================================================= */
+
+async function copyAutoCount() {
+
+    const text =
+        document.getElementById(
+            'autocountOutput'
+        ).value;
+
+
+    if (
+        !text.trim()
+    ) {
+
+        alert(
+            'There is no AutoCount output to copy.'
+        );
+
+        return;
+    }
+
+
+    try {
+
+        await navigator.clipboard.writeText(
+            text
+        );
+
+
+        alert(
+            'AutoCount lines copied.'
+        );
+
+
+    } catch (error) {
+
+        alert(
+            'Unable to copy automatically.'
+        );
+    }
+}
+
+
+/* =========================================================
+   DOWNLOAD
+   ========================================================= */
+
+function downloadAutoCount() {
+
+    const text =
+        document.getElementById(
+            'autocountOutput'
+        ).value;
+
+
+    if (
+        !text.trim()
+    ) {
+
+        alert(
+            'There is no AutoCount output to download.'
+        );
+
+        return;
+    }
+
+
+    const blob =
+        new Blob(
+            [text],
+            {
+                type:
+                    'text/plain'
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    const a =
+        document.createElement(
+            'a'
+        );
+
+
+    a.href =
+        url;
+
+
+    a.download =
+        'autocount_purchase_lines.txt';
+
+
+    a.click();
+
+
+    URL.revokeObjectURL(
+        url
+    );
+}
+
+
+/* =========================================================
+   CLEAR
+   ========================================================= */
+
+function clearAll() {
+
+    selectedFiles = [];
+
+    results = [];
+
+
+    document.getElementById(
+        'fileInput'
+    ).value =
+        '';
+
+
+    document.getElementById(
+        'results'
+    ).innerHTML =
+        '<p style="color:#777;">No receipts processed yet.</p>';
+
+
+    document.getElementById(
+        'autocountOutput'
+    ).value =
+        '';
+
+
+    document.getElementById(
+        'progress'
+    ).style.display =
+        'none';
+
+
+    updateStats();
+}
+
+</script>
+
+</body>
+</html>
