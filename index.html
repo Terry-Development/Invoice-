@@ -1,795 +1,883 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Receipt to AutoCount</title>
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Receipt Extractor</title>
+
 
 <style>
-    * {
-        box-sizing: border-box;
-    }
 
-    body {
-        font-family: Arial, sans-serif;
-        background: #f4f6f8;
-        margin: 0;
-        padding: 30px;
-        color: #222;
-    }
+* {
+    box-sizing: border-box;
+}
 
-    .container {
-        max-width: 1100px;
-        margin: auto;
-    }
+body {
 
-    h1 {
-        margin-bottom: 5px;
-    }
+    margin: 0;
 
-    .subtitle {
-        color: #666;
-        margin-top: 0;
-    }
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 
-    .panel {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
+    background: #f5f7fa;
 
-    input[type="file"] {
-        width: 100%;
-        padding: 12px;
-        border: 2px dashed #aaa;
-        border-radius: 8px;
-        background: #fafafa;
-    }
+    color: #222;
+}
 
-    button {
-        padding: 11px 18px;
-        border: none;
-        border-radius: 7px;
-        cursor: pointer;
-        margin: 5px 5px 5px 0;
-        font-size: 14px;
-    }
 
-    .primary {
-        background: #2563eb;
-        color: white;
-    }
+.container {
 
-    .secondary {
-        background: #e5e7eb;
-        color: #111;
-    }
+    max-width: 1100px;
 
-    .danger {
-        background: #dc2626;
-        color: white;
-    }
+    margin: 40px auto;
 
-    button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
+    padding: 20px;
+}
 
-    .progress {
-        margin-top: 15px;
-        padding: 12px;
-        background: #f1f5f9;
-        border-radius: 8px;
-    }
 
-    .result {
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 12px;
-        background: #fff;
-    }
+h1 {
 
-    .result.error {
-        border-color: #ef4444;
-        background: #fff5f5;
-    }
+    margin-bottom: 5px;
+}
 
-    .result-number {
-        font-weight: bold;
-        margin-bottom: 8px;
-    }
 
-    .field {
-        margin: 5px 0;
-    }
+.subtitle {
 
-    .field strong {
-        display: inline-block;
-        width: 90px;
-    }
+    color: #666;
 
-    .autocount {
-        margin-top: 10px;
-        padding: 10px;
-        background: #f3f4f6;
-        border-radius: 6px;
-        font-family: monospace;
-        word-break: break-word;
-    }
+    margin-bottom: 25px;
+}
 
-    textarea {
-        width: 100%;
-        min-height: 250px;
-        padding: 12px;
-        font-family: monospace;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        resize: vertical;
-    }
 
-    .stats {
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        margin-top: 15px;
-    }
+.card {
 
-    .stat {
-        background: #f8fafc;
-        padding: 10px 15px;
-        border-radius: 8px;
-    }
+    background: white;
+
+    border-radius: 12px;
+
+    padding: 20px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 2px 10px rgba(0,0,0,0.06);
+}
+
+
+input[type="file"] {
+
+    width: 100%;
+
+    padding: 15px;
+
+    border: 2px dashed #bbb;
+
+    border-radius: 10px;
+
+    background: #fafafa;
+}
+
+
+button {
+
+    border: none;
+
+    border-radius: 8px;
+
+    padding: 12px 18px;
+
+    margin: 8px 5px 8px 0;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    font-weight: bold;
+}
+
+
+#processBtn {
+
+    background: #222;
+
+    color: white;
+}
+
+
+#copyBtn {
+
+    background: #eee;
+}
+
+
+#downloadBtn {
+
+    background: #eee;
+}
+
+
+#clearBtn {
+
+    background: #eee;
+}
+
+
+button:disabled {
+
+    opacity: 0.5;
+
+    cursor: not-allowed;
+}
+
+
+.progress {
+
+    margin-top: 15px;
+
+    background: #eee;
+
+    border-radius: 10px;
+
+    overflow: hidden;
+
+    height: 18px;
+}
+
+
+.progressBar {
+
+    height: 100%;
+
+    width: 0%;
+
+    background: #222;
+
+    transition: width 0.3s;
+}
+
+
+.stats {
+
+    display: flex;
+
+    gap: 15px;
+
+    flex-wrap: wrap;
+
+    margin-top: 15px;
+}
+
+
+.stat {
+
+    background: #f2f4f7;
+
+    padding: 12px 16px;
+
+    border-radius: 8px;
+
+    min-width: 120px;
+}
+
+
+.stat strong {
+
+    display: block;
+
+    font-size: 20px;
+}
+
+
+.result {
+
+    border: 1px solid #ddd;
+
+    border-radius: 10px;
+
+    padding: 15px;
+
+    margin-bottom: 12px;
+
+    background: white;
+}
+
+
+.result.success {
+
+    border-left: 5px solid #222;
+}
+
+
+.result.error {
+
+    border-left: 5px solid #c62828;
+}
+
+
+.resultTitle {
+
+    font-weight: bold;
+
+    margin-bottom: 10px;
+}
+
+
+.row {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 5px 0;
+}
+
+
+.label {
+
+    color: #666;
+}
+
+
+.autocount {
+
+    margin-top: 12px;
+
+    padding: 10px;
+
+    background: #f3f3f3;
+
+    border-radius: 7px;
+
+    font-family: monospace;
+
+    overflow-wrap: anywhere;
+}
+
+
+textarea {
+
+    width: 100%;
+
+    min-height: 180px;
+
+    resize: vertical;
+
+    padding: 12px;
+
+    font-family: monospace;
+
+    border: 1px solid #ccc;
+
+    border-radius: 8px;
+}
+
+
+.status {
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    background: #f3f3f3;
+
+    margin-top: 10px;
+
+    white-space: pre-wrap;
+}
+
+
+.status.error {
+
+    background: #ffebee;
+
+    color: #b71c1c;
+}
+
+
+.status.success {
+
+    background: #e8f5e9;
+
+    color: #1b5e20;
+}
+
+
+.hidden {
+
+    display: none;
+}
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <div class="container">
 
-    <h1>Receipt → AutoCount</h1>
 
-    <p class="subtitle">
-        Extract company, item, date and price from up to 30 receipts per Gemini request.
-    </p>
+<h1>Receipt Extractor</h1>
 
-    <div class="panel">
-
-        <input
-            type="file"
-            id="fileInput"
-            accept="image/*"
-            multiple
-        >
-
-        <div style="margin-top:15px;">
-
-            <button
-                id="processBtn"
-                class="primary"
-                onclick="processReceipts()"
-            >
-                Process Receipts
-            </button>
-
-            <button
-                class="secondary"
-                onclick="copyAutoCount()"
-            >
-                Copy AutoCount
-            </button>
-
-            <button
-                class="secondary"
-                onclick="downloadAutoCount()"
-            >
-                Download TXT
-            </button>
-
-            <button
-                class="danger"
-                onclick="clearAll()"
-            >
-                Clear
-            </button>
-
-        </div>
-
-        <div class="stats">
-
-            <div class="stat">
-                Selected:
-                <strong id="selectedCount">0</strong>
-            </div>
-
-            <div class="stat">
-                Processed:
-                <strong id="processedCount">0</strong>
-            </div>
-
-            <div class="stat">
-                Successful:
-                <strong id="successCount">0</strong>
-            </div>
-
-            <div class="stat">
-                Failed:
-                <strong id="failedCount">0</strong>
-            </div>
-
-        </div>
-
-        <div
-            id="progress"
-            class="progress"
-            style="display:none;"
-        ></div>
-
-    </div>
+<div class="subtitle">
+    Upload receipt images and automatically extract
+    company, item, date and price.
+</div>
 
 
-    <div class="panel">
-
-        <h2>Results</h2>
-
-        <div id="results">
-
-            <p style="color:#777;">
-                No receipts processed yet.
-            </p>
-
-        </div>
-
-    </div>
+<div class="card">
 
 
-    <div class="panel">
+<input
+    type="file"
+    id="fileInput"
+    accept="image/*"
+    multiple
+>
 
-        <h2>AutoCount Output</h2>
 
-        <textarea
-            id="autocountOutput"
-            placeholder="AutoCount lines will appear here..."
-        ></textarea>
+<div id="fileInfo"
+     style="margin-top:10px;color:#666;">
+    No files selected.
+</div>
 
-    </div>
+
+<div>
+
+<button id="processBtn">
+    Process Receipts
+</button>
+
+<button id="clearBtn">
+    Clear
+</button>
+
+</div>
+
+
+<div class="progress">
+
+<div
+    id="progressBar"
+    class="progressBar">
+</div>
+
+</div>
+
+
+<div id="status"
+     class="status">
+    Ready.
+</div>
+
+
+<div class="stats">
+
+<div class="stat">
+    <strong id="totalCount">0</strong>
+    Total
+</div>
+
+<div class="stat">
+    <strong id="successCount">0</strong>
+    Successful
+</div>
+
+<div class="stat">
+    <strong id="errorCount">0</strong>
+    Errors
+</div>
+
+</div>
+
+
+</div>
+
+
+<div class="card">
+
+<h2>Results</h2>
+
+<div id="results">
+    No results yet.
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h2>AutoCount</h2>
+
+
+<div style="margin-bottom:10px;">
+
+<button id="copyBtn">
+    Copy AutoCount
+</button>
+
+
+<button id="downloadBtn">
+    Download TXT
+</button>
+
+</div>
+
+
+<textarea
+    id="autocountText"
+    readonly
+    placeholder="AutoCount lines will appear here..."
+></textarea>
+
+
+</div>
+
 
 </div>
 
 
 <script>
 
-/* =========================================================
-   CONFIGURATION
-   ========================================================= */
 
-const API_KEY =
-    'AQ.Ab8RN6KxasuwmCqBcynWEGXj0Zqz4nCcfz5zFv60hFikExnVEA';
-
-
-const MODEL =
-    'gemini-3.5-flash-lite';
-
-
-const ENDPOINT =
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+/****************************************************
+ * CONFIGURATION
+ ****************************************************/
 
 
 /*
-    30 receipts per request.
-*/
+ * YOUR APPS SCRIPT WEB APP URL
+ *
+ * IMPORTANT:
+ * This is NOT your Gemini API key.
+ */
 
-const BATCH_SIZE = 30;
-
-
-/*
-    Wait 15 seconds between batches.
-*/
-
-const DELAY_BETWEEN_BATCHES = 15000;
+const APPS_SCRIPT_URL =
+    'https://script.google.com/macros/s/AKfycbxGYlLkkvFXLxtLTjJMn7DVpPLQR4QASmR7W9ZKlr150muzI5ywiNictWe15jrYohC9ww/exec';
 
 
 /*
-    Maximum image dimension.
-*/
+ * Keep batches fairly small because images are
+ * being sent through Apps Script.
+ */
+
+const BATCH_SIZE = 5;
+
+
+/*
+ * Image settings
+ */
 
 const MAX_IMAGE_SIZE = 1200;
-
-
-/*
-    JPEG quality.
-*/
 
 const JPEG_QUALITY = 0.70;
 
 
 /*
-    Maximum retry attempts.
-*/
+ * Retry settings
+ */
 
-const MAX_RETRIES = 4;
+const MAX_RETRIES = 3;
 
-
-/*
-    Google Apps Script Web App URL.
-*/
-
-const GOOGLE_SHEET_URL =
-    'https://script.google.com/macros/s/AKfycbxGYlLkkvFXLxtLTjJMn7DVpPLQR4QASmR7W9ZKlr150muzI5ywiNictWe15jrYohC9ww/exec';
+const DELAY_BETWEEN_BATCHES = 3000;
 
 
-/* =========================================================
-   STATE
-   ========================================================= */
+/****************************************************
+ * DOM
+ ****************************************************/
 
-let selectedFiles = [];
+const fileInput =
+    document.getElementById('fileInput');
+
+const fileInfo =
+    document.getElementById('fileInfo');
+
+const processBtn =
+    document.getElementById('processBtn');
+
+const clearBtn =
+    document.getElementById('clearBtn');
+
+const resultsContainer =
+    document.getElementById('results');
+
+const autocountText =
+    document.getElementById('autocountText');
+
+const progressBar =
+    document.getElementById('progressBar');
+
+const statusBox =
+    document.getElementById('status');
+
+const totalCount =
+    document.getElementById('totalCount');
+
+const successCount =
+    document.getElementById('successCount');
+
+const errorCount =
+    document.getElementById('errorCount');
+
+const copyBtn =
+    document.getElementById('copyBtn');
+
+const downloadBtn =
+    document.getElementById('downloadBtn');
+
+
+/****************************************************
+ * GLOBAL RESULTS
+ ****************************************************/
 
 let results = [];
 
 
-/* =========================================================
-   FILE SELECTION
-   ========================================================= */
+/****************************************************
+ * FILE SELECTION
+ ****************************************************/
 
-document.getElementById('fileInput').addEventListener(
+fileInput.addEventListener(
     'change',
-    function(event) {
+    function() {
 
-        selectedFiles =
-            Array.from(event.target.files);
+        const files =
+            Array.from(fileInput.files);
 
-        results = [];
+        fileInfo.textContent =
+            files.length +
+            ' file(s) selected.';
 
-        updateStats();
+        totalCount.textContent =
+            files.length;
 
-        document.getElementById(
-            'results'
-        ).innerHTML =
-            selectedFiles.length
-                ? `<p>${selectedFiles.length} receipt(s) selected.</p>`
-                : `<p style="color:#777;">No receipts selected.</p>`;
     }
 );
 
 
-/* =========================================================
-   IMAGE RESIZING
-   ========================================================= */
+/****************************************************
+ * IMAGE RESIZE
+ ****************************************************/
 
 function resizeImage(file) {
 
-    return new Promise((resolve, reject) => {
-
-        const reader =
-            new FileReader();
-
-
-        reader.onload =
-            function(event) {
-
-                const img =
-                    new Image();
-
-
-                img.onload =
-                    function() {
-
-                        let width =
-                            img.width;
-
-                        let height =
-                            img.height;
-
-
-                        if (
-                            width > MAX_IMAGE_SIZE ||
-                            height > MAX_IMAGE_SIZE
-                        ) {
-
-                            const scale =
-                                Math.min(
-                                    MAX_IMAGE_SIZE / width,
-                                    MAX_IMAGE_SIZE / height
-                                );
-
-                            width =
-                                Math.round(
-                                    width * scale
-                                );
-
-                            height =
-                                Math.round(
-                                    height * scale
-                                );
-                        }
-
-
-                        const canvas =
-                            document.createElement(
-                                'canvas'
-                            );
-
-
-                        canvas.width =
-                            width;
-
-                        canvas.height =
-                            height;
-
-
-                        const ctx =
-                            canvas.getContext(
-                                '2d'
-                            );
-
-
-                        ctx.drawImage(
-                            img,
-                            0,
-                            0,
-                            width,
-                            height
-                        );
-
-
-                        const dataUrl =
-                            canvas.toDataURL(
-                                'image/jpeg',
-                                JPEG_QUALITY
-                            );
-
-
-                        resolve({
-
-                            mimeType:
-                                'image/jpeg',
-
-                            data:
-                                dataUrl.split(',')[1]
-
-                        });
-                    };
-
-
-                img.onerror =
-                    () => {
-
-                        reject(
-                            new Error(
-                                'Unable to read image.'
-                            )
-                        );
-                    };
-
-
-                img.src =
-                    event.target.result;
-            };
-
-
-        reader.onerror =
-            () => {
-
-                reject(
-                    new Error(
-                        'Unable to load file.'
-                    )
-                );
-            };
-
-
-        reader.readAsDataURL(file);
-    });
-}
-
-
-/* =========================================================
-   DELAY
-   ========================================================= */
-
-function sleep(ms) {
-
     return new Promise(
-        resolve =>
-            setTimeout(resolve, ms)
+        function(resolve, reject) {
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                function(event) {
+
+                    const img =
+                        new Image();
+
+
+                    img.onload =
+                        function() {
+
+                            let width =
+                                img.width;
+
+                            let height =
+                                img.height;
+
+
+                            /*
+                             * Resize while keeping
+                             * aspect ratio.
+                             */
+
+                            if (
+                                width >
+                                MAX_IMAGE_SIZE ||
+                                height >
+                                MAX_IMAGE_SIZE
+                            ) {
+
+                                const ratio =
+                                    Math.min(
+                                        MAX_IMAGE_SIZE / width,
+                                        MAX_IMAGE_SIZE / height
+                                    );
+
+                                width =
+                                    Math.round(
+                                        width * ratio
+                                    );
+
+                                height =
+                                    Math.round(
+                                        height * ratio
+                                    );
+                            }
+
+
+                            const canvas =
+                                document.createElement(
+                                    'canvas'
+                                );
+
+
+                            canvas.width =
+                                width;
+
+                            canvas.height =
+                                height;
+
+
+                            const ctx =
+                                canvas.getContext(
+                                    '2d'
+                                );
+
+
+                            ctx.drawImage(
+                                img,
+                                0,
+                                0,
+                                width,
+                                height
+                            );
+
+
+                            const dataUrl =
+                                canvas.toDataURL(
+                                    'image/jpeg',
+                                    JPEG_QUALITY
+                                );
+
+
+                            const base64 =
+                                dataUrl.split(',')[1];
+
+
+                            resolve({
+
+                                base64:
+                                    base64,
+
+                                mimeType:
+                                    'image/jpeg',
+
+                                filename:
+                                    file.name
+
+                            });
+
+                        };
+
+
+                    img.onerror =
+                        function() {
+
+                            reject(
+                                new Error(
+                                    'Could not load image.'
+                                )
+                            );
+
+                        };
+
+
+                    img.src =
+                        event.target.result;
+
+                };
+
+
+            reader.onerror =
+                function() {
+
+                    reject(
+                        new Error(
+                            'Could not read file.'
+                        )
+                    );
+
+                };
+
+
+            reader.readAsDataURL(file);
+
+        }
     );
 }
 
 
-/* =========================================================
-   GEMINI REQUEST
-   ========================================================= */
+/****************************************************
+ * DELAY
+ ****************************************************/
 
-async function sendBatchToGemini(
+function sleep(ms) {
+
+    return new Promise(
+        resolve => setTimeout(
+            resolve,
+            ms
+        )
+    );
+
+}
+
+
+/****************************************************
+ * GEMINI EXTRACTION THROUGH APPS SCRIPT
+ ****************************************************/
+
+async function sendBatchToBackend(
     batch,
     startIndex
 ) {
 
-    const parts = [];
 
+    const payload = {
 
-    parts.push({
+        action: 'extract',
 
-        text: `
+        receipts: batch.map(
+            function(receipt) {
 
-You are processing Malaysian business receipts.
+                return {
 
-For EVERY receipt image, extract:
+                    base64:
+                        receipt.base64,
 
-1. company
-2. item
-3. date
-4. price
+                    mimeType:
+                        receipt.mimeType
 
-Return EXACTLY one JSON object for each receipt.
-
-The order MUST match the receipt order.
-
-Return ONLY valid JSON.
-
-Do not include markdown.
-Do not include explanations.
-Do not include extra text.
-
-Required format:
-
-[
-  {
-    "company": "COMPANY NAME",
-    "item": "ITEM DESCRIPTION",
-    "date": "DD.MM.YY",
-    "price": "0.00"
-  }
-]
-
-Rules:
-
-- company = merchant/company shown on the receipt
-- item = the main purchased item or best useful description of the purchase
-- date = transaction date
-- price = TOTAL amount paid for the receipt
-- Use the final total/grand total amount, not subtotal
-- Return price with 2 decimal places
-- Convert dates to DD.MM.YY
-- ALL TEXT MUST BE IN CAPITAL LETTERS
-- If something cannot be identified, use "UNKNOWN"
-- Do not invent information
-- Return exactly ${batch.length} objects.
-
-`
-    });
-
-
-    for (
-        let i = 0;
-        i < batch.length;
-        i++
-    ) {
-
-        const file =
-            batch[i];
-
-
-        parts.push({
-
-            text:
-                `RECEIPT ${startIndex + i + 1}`
-
-        });
-
-
-        const image =
-            await resizeImage(file);
-
-
-        parts.push({
-
-            inline_data: {
-
-                mime_type:
-                    image.mimeType,
-
-                data:
-                    image.data
+                };
 
             }
-
-        });
-    }
-
-
-    const requestBody = {
-
-        contents: [
-
-            {
-
-                role: 'user',
-
-                parts:
-                    parts
-
-            }
-
-        ],
-
-        generationConfig: {
-
-            temperature: 0,
-
-            responseMimeType:
-                'application/json'
-
-        }
+        )
 
     };
 
 
-    let lastError =
-        null;
+    let lastError = null;
 
 
     for (
-        let attempt = 0;
+        let attempt = 1;
         attempt <= MAX_RETRIES;
         attempt++
     ) {
 
         try {
 
+            setStatus(
+                'Processing receipts ' +
+                (startIndex + 1) +
+                '–' +
+                (startIndex + batch.length) +
+                '...'
+            );
+
+
             const response =
                 await fetch(
-                    ENDPOINT,
+                    APPS_SCRIPT_URL,
                     {
 
-                        method:
-                            'POST',
+                        method: 'POST',
+
+                        /*
+                         * text/plain avoids the browser
+                         * preflight request.
+                         *
+                         * Apps Script still receives
+                         * the JSON text in postData.contents.
+                         */
 
                         headers: {
-
                             'Content-Type':
-                                'application/json'
-
+                                'text/plain;charset=utf-8'
                         },
 
                         body:
-                            JSON.stringify(
-                                requestBody
-                            )
+                            JSON.stringify(payload)
 
                     }
                 );
 
 
-            const text =
+            const responseText =
                 await response.text();
 
 
-            if (!response.ok) {
-
-                let message =
-                    text;
+            let data;
 
 
-                try {
+            try {
 
-                    const errorJson =
-                        JSON.parse(text);
-
-
-                    message =
-                        errorJson?.error?.message ||
-                        text;
-
-                } catch (_) {}
-
-
-                if (
-                    response.status === 429 &&
-                    /quota|daily|rpd/i.test(
-                        message
-                    )
-                ) {
-
-                    throw new Error(
-                        `DAILY QUOTA EXCEEDED: ${message}`
-                    );
-                }
-
-
-                if (
-                    (
-                        response.status === 429 ||
-                        response.status === 503
-                    ) &&
-                    attempt < MAX_RETRIES
-                ) {
-
-                    const wait =
-                        Math.pow(
-                            2,
-                            attempt
-                        ) * 5000;
-
-
-                    updateProgress(
-                        `Temporary API limit. Waiting ${Math.round(wait / 1000)} seconds before retry...`
+                data =
+                    JSON.parse(
+                        responseText
                     );
 
-
-                    await sleep(wait);
-
-                    continue;
-                }
-
+            } catch (error) {
 
                 throw new Error(
-                    `HTTP ${response.status}: ${message}`
+                    'Apps Script returned invalid response: ' +
+                    responseText.substring(0, 500)
                 );
+
             }
 
 
-            const data =
-                JSON.parse(text);
-
-
-            const generatedText =
-                data
-                    ?.candidates?.[0]
-                    ?.content?.parts
-                    ?.map(
-                        p => p.text || ''
-                    )
-                    .join('');
-
-
-            if (!generatedText) {
+            if (!data.success) {
 
                 throw new Error(
-                    'Gemini returned an empty response.'
+                    data.error ||
+                    'Unknown backend error.'
                 );
-            }
 
-
-            const cleaned =
-                generatedText
-                    .replace(
-                        /```json/gi,
-                        ''
-                    )
-                    .replace(
-                        /```/g,
-                        ''
-                    )
-                    .trim();
-
-
-            const parsed =
-                JSON.parse(cleaned);
-
-
-            if (!Array.isArray(parsed)) {
-
-                throw new Error(
-                    'Gemini response was not an array.'
-                );
             }
 
 
             if (
-                parsed.length !==
+                !Array.isArray(
+                    data.results
+                )
+            ) {
+
+                throw new Error(
+                    'Backend returned invalid results.'
+                );
+
+            }
+
+
+            if (
+                data.results.length !==
                 batch.length
             ) {
 
                 throw new Error(
-                    `Expected ${batch.length} results but received ${parsed.length}.`
+                    'Backend returned ' +
+                    data.results.length +
+                    ' results instead of ' +
+                    batch.length +
+                    '.'
                 );
+
             }
 
 
-            return parsed;
+            return data.results;
 
 
         } catch (error) {
@@ -798,633 +886,695 @@ Rules:
                 error;
 
 
+            /*
+             * Retry after a delay.
+             */
+
             if (
-                /DAILY QUOTA EXCEEDED/i.test(
+                attempt <
+                MAX_RETRIES
+            ) {
+
+                setStatus(
+                    'Temporary error. ' +
+                    'Retrying (' +
+                    attempt +
+                    '/' +
+                    MAX_RETRIES +
+                    ')...\n\n' +
                     error.message
-                )
-            ) {
+                );
 
-                throw error;
+
+                await sleep(
+                    2000 * attempt
+                );
+
             }
 
-
-            if (
-                attempt >= MAX_RETRIES
-            ) {
-
-                throw error;
-            }
-
-
-            const wait =
-                Math.pow(
-                    2,
-                    attempt
-                ) * 5000;
-
-
-            updateProgress(
-                `Error. Retrying in ${Math.round(wait / 1000)} seconds...`
-            );
-
-
-            await sleep(wait);
         }
+
     }
 
 
     throw lastError ||
         new Error(
-            'Unknown Gemini error.'
+            'Batch processing failed.'
         );
 }
 
 
-/* =========================================================
-   GOOGLE SHEETS
-   ========================================================= */
+/****************************************************
+ * AUTCOUNT LINE
+ ****************************************************/
 
-async function saveToGoogleSheet(
-    records
-) {
+function makeAutoCountLine(result) {
 
-    const validRecords =
-        records
-            .filter(
-                record =>
-                    record.success
-            )
-            .map(
-                record => ({
+    const item =
+        result.item || '';
 
-                    date:
-                        record.date
-                            .toUpperCase(),
+    const company =
+        result.company || '';
 
-                    company:
-                        record.company
-                            .toUpperCase(),
-
-                    item:
-                        record.item
-                            .toUpperCase(),
-
-                    price:
-                        record.price,
-
-                    autocount:
-                        makeAutoCountLine(
-                            record
-                        ),
-
-                    filename:
-                        record.filename,
-
-                    success:
-                        true
-
-                })
-            );
+    const date =
+        result.date || '';
 
 
-    if (
-        validRecords.length === 0
-    ) {
-
-        return;
-    }
-
-
-    if (
-        !GOOGLE_SHEET_URL ||
-        GOOGLE_SHEET_URL ===
-            'PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
-    ) {
-
-        throw new Error(
-            'Google Sheets URL has not been configured.'
-        );
-    }
-
-
-    await fetch(
-        GOOGLE_SHEET_URL,
-        {
-
-            method:
-                'POST',
-
-            mode:
-                'no-cors',
-
-            headers: {
-
-                'Content-Type':
-                    'text/plain;charset=utf-8'
-
-            },
-
-            body:
-                JSON.stringify({
-
-                    records:
-                        validRecords
-
-                })
-
-        }
+    return (
+        'BEING PURCHASE OF ' +
+        item +
+        ' - ' +
+        company +
+        ' - ' +
+        date
     );
 }
 
 
-/* =========================================================
-   PROCESS ALL RECEIPTS
-   ========================================================= */
+/****************************************************
+ * PROCESS ALL RECEIPTS
+ ****************************************************/
 
 async function processReceipts() {
 
-    if (
-        !API_KEY ||
-        API_KEY ===
-            'PASTE_NEW_API_KEY_HERE'
-    ) {
+    const files =
+        Array.from(
+            fileInput.files
+        );
 
-        alert(
-            'Please enter your NEW Gemini API key first.'
+
+    if (files.length === 0) {
+
+        setStatus(
+            'Please select at least one receipt.',
+            true
         );
 
         return;
     }
 
 
-    if (
-        selectedFiles.length === 0
-    ) {
+    processBtn.disabled = true;
 
-        alert(
-            'Please select some receipt images first.'
-        );
-
-        return;
-    }
-
-
-    const processButton =
-        document.getElementById(
-            'processBtn'
-        );
-
-
-    processButton.disabled =
-        true;
+    clearBtn.disabled = true;
 
 
     results = [];
 
 
-    document.getElementById(
-        'results'
-    ).innerHTML =
+    resultsContainer.innerHTML =
         '';
 
 
-    const total =
-        selectedFiles.length;
+    autocountText.value =
+        '';
 
 
-    let success =
-        0;
+    successCount.textContent =
+        '0';
 
-    let failed =
-        0;
+    errorCount.textContent =
+        '0';
 
 
     try {
 
+        /********************************************
+         * Prepare images
+         ********************************************/
+
+        setStatus(
+            'Preparing ' +
+            files.length +
+            ' receipt image(s)...'
+        );
+
+
+        const preparedFiles = [];
+
+
         for (
-            let start = 0;
-            start < total;
-            start += BATCH_SIZE
+            let i = 0;
+            i < files.length;
+            i++
         ) {
-
-            const end =
-                Math.min(
-                    start + BATCH_SIZE,
-                    total
-                );
-
-
-            const batch =
-                selectedFiles.slice(
-                    start,
-                    end
-                );
-
-
-            updateProgress(
-                `Processing receipts ${start + 1}–${end} of ${total}...`
-            );
-
 
             try {
 
-                const extracted =
-                    await sendBatchToGemini(
-                        batch,
-                        start
+                const image =
+                    await resizeImage(
+                        files[i]
                     );
 
 
-                for (
-                    let i = 0;
-                    i < batch.length;
-                    i++
-                ) {
+                preparedFiles.push({
 
-                    const data =
-                        extracted[i];
+                    ...image,
 
+                    originalIndex:
+                        i,
 
-                    const item =
-                        cleanValue(
-                            data.item
-                        ).toUpperCase();
+                    filename:
+                        files[i].name
 
-
-                    const company =
-                        cleanValue(
-                            data.company
-                        ).toUpperCase();
-
-
-                    const date =
-                        cleanValue(
-                            data.date
-                        ).toUpperCase();
-
-
-                    const price =
-                        cleanValue(
-                            data.price
-                        );
-
-
-                    const isValid =
-                        item !== 'UNKNOWN' &&
-                        company !== 'UNKNOWN' &&
-                        date !== 'UNKNOWN' &&
-                        price !== 'UNKNOWN';
-
-
-                    const record = {
-
-                        filename:
-                            batch[i].name,
-
-                        company:
-                            company,
-
-                        item:
-                            item,
-
-                        date:
-                            date,
-
-                        price:
-                            price,
-
-                        success:
-                            isValid,
-
-                        error:
-                            isValid
-                                ? ''
-                                : 'One or more fields could not be identified.'
-
-                    };
-
-
-                    results.push(
-                        record
-                    );
-
-
-                    if (
-                        isValid
-                    ) {
-
-                        success++;
-
-                    } else {
-
-                        failed++;
-                    }
-                }
-
+                });
 
             } catch (error) {
 
-                for (
-                    let i = 0;
-                    i < batch.length;
-                    i++
-                ) {
+                results[i] = {
 
-                    results.push({
+                    success: false,
 
-                        filename:
-                            batch[i].name,
+                    filename:
+                        files[i].name,
 
-                        company:
-                            'ERROR',
-
-                        item:
-                            'ERROR',
-
-                        date:
-                            '',
-
-                        price:
-                            '',
-
-                        success:
-                            false,
-
-                        error:
-                            error.message
-
-                    });
-
-
-                    failed++;
-                }
-
-
-                if (
-                    /DAILY QUOTA EXCEEDED/i.test(
+                    error:
                         error.message
-                    )
-                ) {
 
-                    updateProgress(
-                        'Daily quota reached. Processing stopped so no more requests are wasted.'
-                    );
+                };
 
-                    break;
-                }
             }
 
+        }
 
-            updateStats();
+
+        /********************************************
+         * Process batches
+         ********************************************/
+
+        for (
+            let start = 0;
+            start < preparedFiles.length;
+            start += BATCH_SIZE
+        ) {
+
+            const batch =
+                preparedFiles.slice(
+                    start,
+                    start + BATCH_SIZE
+                );
+
+
+            const batchResults =
+                await sendBatchToBackend(
+                    batch,
+                    start
+                );
+
+
+            batch.forEach(
+                function(receipt, index) {
+
+                    const result =
+                        batchResults[index];
+
+
+                    results[
+                        receipt.originalIndex
+                    ] = {
+
+                        success: true,
+
+                        filename:
+                            receipt.filename,
+
+                        company:
+                            result.company || '',
+
+                        item:
+                            result.item || '',
+
+                        date:
+                            result.date || '',
+
+                        price:
+                            result.price || '',
+
+                        autocount:
+                            makeAutoCountLine(
+                                result
+                            )
+
+                    };
+
+                }
+            );
+
+
+            const processed =
+                Math.min(
+                    start + batch.length,
+                    preparedFiles.length
+                );
+
+
+            const percent =
+                Math.round(
+                    processed /
+                    preparedFiles.length *
+                    100
+                );
+
+
+            progressBar.style.width =
+                percent + '%';
+
 
             renderResults();
 
-            updateAutoCount();
+            updateStats();
 
 
             if (
-                end < total
+                start + BATCH_SIZE <
+                preparedFiles.length
             ) {
-
-                updateProgress(
-                    `Batch complete. Waiting ${DELAY_BETWEEN_BATCHES / 1000} seconds before the next batch...`
-                );
-
 
                 await sleep(
                     DELAY_BETWEEN_BATCHES
                 );
+
             }
+
         }
 
 
-        /*
-            SAVE TO GOOGLE SHEETS
-        */
+        /********************************************
+         * Save successful results to Google Sheets
+         ********************************************/
 
-        try {
+        setStatus(
+            'Saving results to Google Sheets...'
+        );
 
-            await saveToGoogleSheet(
-                results
+
+        const successfulRecords =
+            results.filter(
+                function(result) {
+
+                    return (
+                        result &&
+                        result.success
+                    );
+
+                }
             );
 
 
-            updateProgress(
-                `Finished. ${success} successful, ${failed} failed. Saved to Google Sheets.`
+        if (
+            successfulRecords.length > 0
+        ) {
+
+            await saveToGoogleSheets(
+                successfulRecords
             );
 
-
-        } catch (sheetError) {
-
-            console.error(
-                'Google Sheets error:',
-                sheetError
-            );
-
-
-            updateProgress(
-                `Finished. ${success} successful, ${failed} failed. Google Sheets save could not be confirmed.`
-            );
         }
 
+
+        /********************************************
+         * Finish
+         ********************************************/
+
+        progressBar.style.width =
+            '100%';
+
+
+        setStatus(
+            'Finished.\n' +
+            successfulRecords.length +
+            ' receipt(s) processed.'
+        );
+
+
+        renderResults();
+
+        updateStats();
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        setStatus(
+            'ERROR:\n' +
+            error.message,
+            true
+        );
+
+        renderResults();
+
+        updateStats();
 
     } finally {
 
-        processButton.disabled =
+        processBtn.disabled =
             false;
 
-        updateStats();
+        clearBtn.disabled =
+            false;
+
     }
+
 }
 
 
-/* =========================================================
-   CLEAN VALUES
-   ========================================================= */
+/****************************************************
+ * SAVE TO GOOGLE SHEETS
+ ****************************************************/
 
-function cleanValue(
-    value
+async function saveToGoogleSheets(
+    records
 ) {
 
-    if (
-        value === null ||
-        value === undefined ||
-        String(value).trim() === ''
-    ) {
+    const payload = {
 
-        return 'UNKNOWN';
+        action: 'save',
+
+        records: records
+
+    };
+
+
+    const response =
+        await fetch(
+            APPS_SCRIPT_URL,
+            {
+
+                method: 'POST',
+
+                headers: {
+
+                    'Content-Type':
+                        'text/plain;charset=utf-8'
+
+                },
+
+                body:
+                    JSON.stringify(
+                        payload
+                    )
+
+            }
+        );
+
+
+    const text =
+        await response.text();
+
+
+    let data;
+
+
+    try {
+
+        data =
+            JSON.parse(text);
+
+    } catch (error) {
+
+        throw new Error(
+            'Google Sheets backend returned invalid response.'
+        );
+
     }
 
 
-    return String(
-        value
-    ).trim();
-}
+    if (!data.success) {
 
+        throw new Error(
+            data.error ||
+            'Failed to save to Google Sheets.'
+        );
 
-/* =========================================================
-   AUTOCOUNT LINE
-   ========================================================= */
-
-function makeAutoCountLine(
-    record
-) {
-
-    if (
-        !record.success
-    ) {
-
-        return '';
     }
 
 
-    return (
-        `BEING PURCHASE OF ${record.item.toUpperCase()} - ` +
-        `${record.company.toUpperCase()} - ` +
-        `${record.date.toUpperCase()}`
-    );
+    return data;
+
 }
 
 
-/* =========================================================
-   UPDATE AUTOCOUNT
-   ========================================================= */
+/****************************************************
+ * RENDER RESULTS
+ ****************************************************/
+
+function renderResults() {
+
+    if (results.length === 0) {
+
+        resultsContainer.innerHTML =
+            'No results yet.';
+
+        return;
+
+    }
+
+
+    resultsContainer.innerHTML =
+        results
+            .map(
+                function(result, index) {
+
+                    if (!result) {
+
+                        return `
+                            <div class="result">
+                                <div class="resultTitle">
+                                    Receipt ${index + 1}
+                                </div>
+                                <div>
+                                    Not processed.
+                                </div>
+                            </div>
+                        `;
+
+                    }
+
+
+                    if (!result.success) {
+
+                        return `
+                            <div class="result error">
+
+                                <div class="resultTitle">
+                                    ${escapeHtml(
+                                        result.filename ||
+                                        'Receipt ' +
+                                        (index + 1)
+                                    )}
+                                </div>
+
+                                <div>
+                                    ERROR:
+                                    ${escapeHtml(
+                                        result.error ||
+                                        'Unknown error'
+                                    )}
+                                </div>
+
+                            </div>
+                        `;
+
+                    }
+
+
+                    return `
+                        <div class="result success">
+
+                            <div class="resultTitle">
+                                ${escapeHtml(
+                                    result.filename
+                                )}
+                            </div>
+
+                            <div class="row">
+                                <span class="label">
+                                    Company
+                                </span>
+
+                                <strong>
+                                    ${escapeHtml(
+                                        result.company
+                                    )}
+                                </strong>
+                            </div>
+
+
+                            <div class="row">
+                                <span class="label">
+                                    Item
+                                </span>
+
+                                <strong>
+                                    ${escapeHtml(
+                                        result.item
+                                    )}
+                                </strong>
+                            </div>
+
+
+                            <div class="row">
+                                <span class="label">
+                                    Date
+                                </span>
+
+                                <strong>
+                                    ${escapeHtml(
+                                        result.date
+                                    )}
+                                </strong>
+                            </div>
+
+
+                            <div class="row">
+                                <span class="label">
+                                    Price
+                                </span>
+
+                                <strong>
+                                    RM ${escapeHtml(
+                                        result.price
+                                    )}
+                                </strong>
+                            </div>
+
+
+                            <div class="autocount">
+
+                                <span>
+                                    ${escapeHtml(
+                                        result.autocount
+                                    )}
+                                </span>
+
+                                <span style="
+                                    float:right;
+                                    font-weight:bold;
+                                ">
+                                    RM ${escapeHtml(
+                                        result.price
+                                    )}
+                                </span>
+
+                            </div>
+
+                        </div>
+                    `;
+
+                }
+            )
+            .join('');
+
+
+    updateAutoCount();
+
+}
+
+
+/****************************************************
+ * UPDATE AUTOCOUNT
+ ****************************************************/
 
 function updateAutoCount() {
 
     const lines =
         results
             .filter(
-                r => r.success
+                function(result) {
+
+                    return (
+                        result &&
+                        result.success
+                    );
+
+                }
             )
             .map(
-                makeAutoCountLine
-            )
-            .filter(
-                Boolean
+                function(result) {
+
+                    return result.autocount;
+
+                }
             );
 
 
-    document.getElementById(
-        'autocountOutput'
-    ).value =
+    autocountText.value =
         lines.join('\n');
+
 }
 
 
-/* =========================================================
-   RENDER RESULTS
-   ========================================================= */
+/****************************************************
+ * UPDATE STATS
+ ****************************************************/
 
-function renderResults() {
+function updateStats() {
 
-    const container =
-        document.getElementById(
-            'results'
-        );
+    const successful =
+        results.filter(
+            function(result) {
 
+                return (
+                    result &&
+                    result.success
+                );
 
-    if (
-        results.length === 0
-    ) {
-
-        container.innerHTML =
-            '<p style="color:#777;">No results.</p>';
-
-        return;
-    }
+            }
+        ).length;
 
 
-    container.innerHTML =
-        results
-            .map(
-                (r, index) => {
+    const errors =
+        results.filter(
+            function(result) {
 
-                    if (
-                        !r.success
-                    ) {
+                return (
+                    result &&
+                    !result.success
+                );
 
-                        return `
-
-                            <div class="result error">
-
-                                <div class="result-number">
-                                    Receipt ${index + 1}
-                                </div>
-
-                                <div class="field">
-                                    <strong>File:</strong>
-                                    ${escapeHtml(r.filename)}
-                                </div>
-
-                                <div class="field">
-                                    <strong>Error:</strong>
-                                    ${escapeHtml(r.error)}
-                                </div>
-
-                            </div>
-
-                        `;
-                    }
+            }
+        ).length;
 
 
-                    return `
+    successCount.textContent =
+        successful;
 
-                        <div class="result">
+    errorCount.textContent =
+        errors;
 
-                            <div class="result-number">
-                                Receipt ${index + 1}
-                            </div>
-
-                            <div class="field">
-                                <strong>File:</strong>
-                                ${escapeHtml(r.filename)}
-                            </div>
-
-                            <div class="field">
-                                <strong>Company:</strong>
-                                ${escapeHtml(r.company)}
-                            </div>
-
-                            <div class="field">
-                                <strong>Item:</strong>
-                                ${escapeHtml(r.item)}
-                            </div>
-
-                            <div class="field">
-                                <strong>Date:</strong>
-                                ${escapeHtml(r.date)}
-                            </div>
-
-                            <div class="field">
-                                <strong>Price:</strong>
-                                RM ${escapeHtml(r.price)}
-                            </div>
-
-                            <div class="autocount">
-                                ${escapeHtml(
-                                    makeAutoCountLine(r)
-                                )}
-                            </div>
-
-                        </div>
-
-                    `;
-                }
-            )
-            .join('');
 }
 
 
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
+/****************************************************
+ * STATUS
+ ****************************************************/
 
-function escapeHtml(
-    value
+function setStatus(
+    message,
+    isError = false
 ) {
 
-    return String(value)
+    statusBox.textContent =
+        message;
+
+    statusBox.className =
+        isError
+            ? 'status error'
+            : 'status';
+
+}
+
+
+/****************************************************
+ * ESCAPE HTML
+ ****************************************************/
+
+function escapeHtml(value) {
+
+    return String(
+        value ?? ''
+    )
         .replace(
             /&/g,
             '&amp;'
@@ -1445,214 +1595,154 @@ function escapeHtml(
             /'/g,
             '&#039;'
         );
+
 }
 
 
-/* =========================================================
-   PROGRESS
-   ========================================================= */
+/****************************************************
+ * COPY AUTOCOUNT
+ ****************************************************/
 
-function updateProgress(
-    message
-) {
+copyBtn.addEventListener(
+    'click',
+    async function() {
 
-    const element =
-        document.getElementById(
-            'progress'
-        );
+        if (!autocountText.value) {
 
+            return;
 
-    element.style.display =
-        'block';
+        }
 
-
-    element.textContent =
-        message;
-}
-
-
-/* =========================================================
-   STATS
-   ========================================================= */
-
-function updateStats() {
-
-    document.getElementById(
-        'selectedCount'
-    ).textContent =
-        selectedFiles.length;
-
-
-    document.getElementById(
-        'processedCount'
-    ).textContent =
-        results.length;
-
-
-    document.getElementById(
-        'successCount'
-    ).textContent =
-        results.filter(
-            r => r.success
-        ).length;
-
-
-    document.getElementById(
-        'failedCount'
-    ).textContent =
-        results.filter(
-            r => !r.success
-        ).length;
-}
-
-
-/* =========================================================
-   COPY
-   ========================================================= */
-
-async function copyAutoCount() {
-
-    const text =
-        document.getElementById(
-            'autocountOutput'
-        ).value;
-
-
-    if (
-        !text.trim()
-    ) {
-
-        alert(
-            'There is no AutoCount output to copy.'
-        );
-
-        return;
-    }
-
-
-    try {
 
         await navigator.clipboard.writeText(
-            text
+            autocountText.value
         );
 
 
-        alert(
+        setStatus(
             'AutoCount lines copied.'
         );
 
-
-    } catch (error) {
-
-        alert(
-            'Unable to copy automatically.'
-        );
     }
-}
+);
 
 
-/* =========================================================
-   DOWNLOAD
-   ========================================================= */
+/****************************************************
+ * DOWNLOAD TXT
+ ****************************************************/
 
-function downloadAutoCount() {
+downloadBtn.addEventListener(
+    'click',
+    function() {
 
-    const text =
-        document.getElementById(
-            'autocountOutput'
-        ).value;
+        if (!autocountText.value) {
+
+            return;
+
+        }
 
 
-    if (
-        !text.trim()
-    ) {
+        const blob =
+            new Blob(
+                [
+                    autocountText.value
+                ],
+                {
+                    type:
+                        'text/plain;charset=utf-8'
+                }
+            );
 
-        alert(
-            'There is no AutoCount output to download.'
+
+        const url =
+            URL.createObjectURL(
+                blob
+            );
+
+
+        const a =
+            document.createElement(
+                'a'
+            );
+
+
+        a.href =
+            url;
+
+        a.download =
+            'autocount.txt';
+
+
+        document.body.appendChild(a);
+
+        a.click();
+
+        a.remove();
+
+
+        URL.revokeObjectURL(
+            url
         );
 
-        return;
     }
+);
 
 
-    const blob =
-        new Blob(
-            [text],
-            {
-                type:
-                    'text/plain'
-            }
+/****************************************************
+ * CLEAR
+ ****************************************************/
+
+clearBtn.addEventListener(
+    'click',
+    function() {
+
+        fileInput.value =
+            '';
+
+        fileInfo.textContent =
+            'No files selected.';
+
+        results =
+            [];
+
+        resultsContainer.innerHTML =
+            'No results yet.';
+
+        autocountText.value =
+            '';
+
+        progressBar.style.width =
+            '0%';
+
+        totalCount.textContent =
+            '0';
+
+        successCount.textContent =
+            '0';
+
+        errorCount.textContent =
+            '0';
+
+        setStatus(
+            'Ready.'
         );
 
-
-    const url =
-        URL.createObjectURL(
-            blob
-        );
+    }
+);
 
 
-    const a =
-        document.createElement(
-            'a'
-        );
+/****************************************************
+ * PROCESS BUTTON
+ ****************************************************/
 
-
-    a.href =
-        url;
-
-
-    a.download =
-        'autocount_purchase_lines.txt';
-
-
-    a.click();
-
-
-    URL.revokeObjectURL(
-        url
-    );
-}
-
-
-/* =========================================================
-   CLEAR
-   ========================================================= */
-
-function clearAll() {
-
-    selectedFiles = [];
-
-    results = [];
-
-
-    document.getElementById(
-        'fileInput'
-    ).value =
-        '';
-
-
-    document.getElementById(
-        'results'
-    ).innerHTML =
-        '<p style="color:#777;">No receipts processed yet.</p>';
-
-
-    document.getElementById(
-        'autocountOutput'
-    ).value =
-        '';
-
-
-    document.getElementById(
-        'progress'
-    ).style.display =
-        'none';
-
-
-    updateStats();
-}
+processBtn.addEventListener(
+    'click',
+    processReceipts
+);
 
 </script>
 
+
 </body>
+
 </html>
