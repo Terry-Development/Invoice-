@@ -2,11 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>Receipt → AutoCount</title>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -49,12 +53,11 @@
       padding: 30px 20px;
       text-align: center;
       cursor: pointer;
-      transition: 0.2s;
     }
 
     .upload-area:hover {
-      border-color: #333;
       background: #fafafa;
+      border-color: #333;
     }
 
     .upload-area input {
@@ -86,6 +89,11 @@
       margin: 5px;
     }
 
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .primary {
       background: #222;
       color: white;
@@ -99,11 +107,6 @@
     .danger {
       background: #d9534f;
       color: white;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
     }
 
     .controls {
@@ -132,7 +135,6 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 10px;
     }
 
     .result-card {
@@ -140,7 +142,7 @@
       border-radius: 10px;
       padding: 15px;
       margin-top: 12px;
-      background: #fff;
+      background: white;
     }
 
     .result-card.failed {
@@ -155,7 +157,7 @@
     }
 
     .field {
-      margin: 5px 0;
+      margin: 6px 0;
       word-break: break-word;
     }
 
@@ -200,6 +202,7 @@
     }
 
     @media (max-width: 600px) {
+
       body {
         padding: 10px;
       }
@@ -221,8 +224,11 @@
         width: 100%;
         margin: 4px 0;
       }
+
     }
+
   </style>
+
 </head>
 
 <body>
@@ -230,15 +236,29 @@
 <div class="container">
 
   <h1>Receipt → AutoCount</h1>
+
   <div class="subtitle">
     Upload receipts and extract accounting information automatically
   </div>
 
+
+  <!-- ========================================================
+       UPLOAD
+       ======================================================== -->
+
   <div class="card">
 
-    <div class="upload-area" id="uploadArea">
+    <div
+      class="upload-area"
+      id="uploadArea"
+    >
+
       <label for="fileInput">
-        <span class="upload-button">Select Receipt Images</span>
+
+        <span class="upload-button">
+          Select Receipt Images
+        </span>
+
       </label>
 
       <input
@@ -248,10 +268,19 @@
         multiple
       >
 
-      <div class="file-info" id="fileInfo">
+      <div
+        class="file-info"
+        id="fileInfo"
+      >
         No images selected
       </div>
+
     </div>
+
+
+    <!-- ======================================================
+         BUTTONS
+         ====================================================== -->
 
     <div class="controls">
 
@@ -310,44 +339,103 @@
 
     </div>
 
-    <div class="status" id="status">
+
+    <div
+      class="status"
+      id="status"
+    >
       Ready.
     </div>
 
-    <div class="progress" id="progress"></div>
+
+    <div
+      class="progress"
+      id="progress"
+    ></div>
 
   </div>
 
 
+  <!-- ========================================================
+       RESULTS
+       ======================================================== -->
+
   <div class="card">
 
     <div class="results-header">
+
       <h2>Results</h2>
+
     </div>
+
 
     <div class="stats">
 
       <div class="stat">
-        <div class="stat-number" id="selectedCount">0</div>
-        <div class="stat-label">Selected</div>
+
+        <div
+          class="stat-number"
+          id="selectedCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Selected
+        </div>
+
       </div>
 
-      <div class="stat">
-        <div class="stat-number" id="processedCount">0</div>
-        <div class="stat-label">Processed</div>
-      </div>
 
       <div class="stat">
-        <div class="stat-number" id="successCount">0</div>
-        <div class="stat-label">Success</div>
+
+        <div
+          class="stat-number"
+          id="processedCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Processed
+        </div>
+
       </div>
 
+
       <div class="stat">
-        <div class="stat-number" id="failedCount">0</div>
-        <div class="stat-label">Failed</div>
+
+        <div
+          class="stat-number"
+          id="successCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Success
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div
+          class="stat-number"
+          id="failedCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Failed
+        </div>
+
       </div>
 
     </div>
+
 
     <div id="results"></div>
 
@@ -358,463 +446,694 @@
 
 <script>
 
-  // ============================================================
-  // CONFIGURATION
-  // ============================================================
 
-  const APPS_SCRIPT_URL=
-    "https://script.google.com/macros/s/AKfycbxGYlLkkvFXLxtLTjJMn7DVpPLQR4QASmR7W9ZKlr150muzI5ywiNictWe15jrYohC9ww/exec";
+// ============================================================
+// CONFIGURATION
+// ============================================================
 
-  /*
-    Keep batches small.
-
-    5 receipts per Gemini request gives the API more breathing room
-    than sending 10 images at once.
-  */
-  const BATCH_SIZE = 5;
-
-  /*
-    Images are resized before being sent to Apps Script.
-  */
-  const MAX_IMAGE_SIZE = 1200;
-
-  /*
-    JPEG quality.
-  */
-  const JPEG_QUALITY = 0.70;
-
-  /*
-    Frontend retry count.
-
-    Apps Script ALSO has model-level retries.
-    Keeping this at 2 prevents excessive duplicate requests.
-  */
-  const MAX_RETRIES = 2;
-
-  /*
-    Delay between batches.
-  */
-  const DELAY_BETWEEN_BATCHES = 5000;
+const APPS_SCRIPT_URL =
+  "https://docs.google.com/spreadsheets/d/1Plw64DsOXPbNQ95t8orFGVkA-gLl4tXp04vG-2gEIUc/edit?usp=sharing";
 
 
-  // ============================================================
-  // GLOBAL VARIABLES
-  // ============================================================
+// ------------------------------------------------------------
+// IMPORTANT
+//
+// 1 photo  = 1 Gemini request
+//
+// Multiple photos are split into groups of 5.
+//
+// This is deliberately smaller than the old batch size of 10.
+// ------------------------------------------------------------
 
-  let selectedFiles = [];
-  let extractedResults = [];
-
-
-  // ============================================================
-  // ELEMENTS
-  // ============================================================
-
-  const fileInput = document.getElementById("fileInput");
-  const fileInfo = document.getElementById("fileInfo");
-  const uploadArea = document.getElementById("uploadArea");
-
-  const extractBtn = document.getElementById("extractBtn");
-  const copyBtn = document.getElementById("copyBtn");
-  const downloadBtn = document.getElementById("downloadBtn");
-  const csvBtn = document.getElementById("csvBtn");
-  const saveBtn = document.getElementById("saveBtn");
-
-  const statusEl = document.getElementById("status");
-  const progressEl = document.getElementById("progress");
-  const resultsEl = document.getElementById("results");
-
-  const selectedCountEl = document.getElementById("selectedCount");
-  const processedCountEl = document.getElementById("processedCount");
-  const successCountEl = document.getElementById("successCount");
-  const failedCountEl = document.getElementById("failedCount");
+const BATCH_SIZE = 5;
 
 
-  // ============================================================
-  // FILE SELECTION
-  // ============================================================
+// ------------------------------------------------------------
+// IMAGE SETTINGS
+// ------------------------------------------------------------
 
-  fileInput.addEventListener("change", function () {
+const MAX_IMAGE_SIZE = 1200;
 
-    selectedFiles = Array.from(this.files);
+const JPEG_QUALITY = 0.70;
+
+
+// ------------------------------------------------------------
+// FRONTEND RETRY
+//
+// Apps Script already performs model fallback.
+//
+// Therefore we don't want the browser repeatedly
+// resending the same request.
+//
+// Only retry the entire Apps Script request once.
+// ------------------------------------------------------------
+
+const MAX_RETRIES = 1;
+
+
+// ------------------------------------------------------------
+// DELAY BETWEEN MULTIPLE BATCHES
+//
+// Only applies when there are multiple batches.
+//
+// There is NO artificial delay for one photo.
+// ------------------------------------------------------------
+
+const DELAY_BETWEEN_BATCHES = 1500;
+
+
+// ============================================================
+// GLOBAL VARIABLES
+// ============================================================
+
+let selectedFiles = [];
+
+let extractedResults = [];
+
+
+// ============================================================
+// ELEMENTS
+// ============================================================
+
+const fileInput =
+  document.getElementById("fileInput");
+
+const fileInfo =
+  document.getElementById("fileInfo");
+
+const uploadArea =
+  document.getElementById("uploadArea");
+
+const extractBtn =
+  document.getElementById("extractBtn");
+
+const copyBtn =
+  document.getElementById("copyBtn");
+
+const downloadBtn =
+  document.getElementById("downloadBtn");
+
+const csvBtn =
+  document.getElementById("csvBtn");
+
+const saveBtn =
+  document.getElementById("saveBtn");
+
+const statusEl =
+  document.getElementById("status");
+
+const progressEl =
+  document.getElementById("progress");
+
+const resultsEl =
+  document.getElementById("results");
+
+const selectedCountEl =
+  document.getElementById("selectedCount");
+
+const processedCountEl =
+  document.getElementById("processedCount");
+
+const successCountEl =
+  document.getElementById("successCount");
+
+const failedCountEl =
+  document.getElementById("failedCount");
+
+
+// ============================================================
+// FILE SELECTION
+// ============================================================
+
+fileInput.addEventListener(
+  "change",
+  function() {
+
+    selectedFiles =
+      Array.from(this.files);
+
+    extractedResults = [];
 
     updateFileInfo();
 
-    extractedResults = [];
     renderResults();
 
     updateButtons();
 
-  });
+  }
+);
 
 
-  uploadArea.addEventListener("dragover", function (event) {
+// ============================================================
+// DRAG AND DROP
+// ============================================================
+
+uploadArea.addEventListener(
+  "dragover",
+  function(event) {
+
     event.preventDefault();
-  });
+
+  }
+);
 
 
-  uploadArea.addEventListener("drop", function (event) {
+uploadArea.addEventListener(
+  "drop",
+  function(event) {
 
     event.preventDefault();
 
-    selectedFiles = Array.from(event.dataTransfer.files)
-      .filter(file => file.type.startsWith("image/"));
+    selectedFiles =
+      Array.from(
+        event.dataTransfer.files
+      ).filter(function(file) {
+
+        return file.type.startsWith("image/");
+
+      });
+
+
+    extractedResults = [];
 
     updateFileInfo();
 
-    extractedResults = [];
     renderResults();
 
     updateButtons();
 
-  });
+  }
+);
 
 
-  function updateFileInfo() {
+// ============================================================
+// UPDATE FILE INFO
+// ============================================================
 
-    if (selectedFiles.length === 0) {
+function updateFileInfo() {
 
-      fileInfo.textContent = "No images selected";
+  if (selectedFiles.length === 0) {
 
-    } else {
+    fileInfo.textContent =
+      "No images selected";
 
-      fileInfo.textContent =
-        selectedFiles.length +
-        " image" +
-        (selectedFiles.length === 1 ? "" : "s") +
-        " selected";
+  } else {
 
-    }
+    fileInfo.textContent =
+      selectedFiles.length +
+      " image" +
+      (
+        selectedFiles.length === 1
+          ? ""
+          : "s"
+      ) +
+      " selected";
 
-    selectedCountEl.textContent = selectedFiles.length;
   }
 
 
-  // ============================================================
-  // IMAGE COMPRESSION
-  // ============================================================
+  selectedCountEl.textContent =
+    selectedFiles.length;
 
-  function compressImage(file) {
+}
 
-    return new Promise((resolve, reject) => {
 
-      const reader = new FileReader();
+// ============================================================
+// IMAGE COMPRESSION
+// ============================================================
 
-      reader.onload = function () {
+function compressImage(file) {
 
-        const img = new Image();
+  return new Promise(
+    function(resolve, reject) {
 
-        img.onload = function () {
+      const reader =
+        new FileReader();
 
-          let width = img.width;
-          let height = img.height;
 
-          /*
-            Resize while maintaining aspect ratio.
-          */
+      reader.onload =
+        function() {
 
-          if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
+          const img =
+            new Image();
 
-            if (width > height) {
 
-              height =
-                Math.round(
-                  height * MAX_IMAGE_SIZE / width
+          img.onload =
+            function() {
+
+              let width =
+                img.width;
+
+              let height =
+                img.height;
+
+
+              // ----------------------------------------------
+              // Resize only if necessary
+              // ----------------------------------------------
+
+              if (
+                width > MAX_IMAGE_SIZE ||
+                height > MAX_IMAGE_SIZE
+              ) {
+
+                if (width > height) {
+
+                  height =
+                    Math.round(
+                      height *
+                      MAX_IMAGE_SIZE /
+                      width
+                    );
+
+                  width =
+                    MAX_IMAGE_SIZE;
+
+                } else {
+
+                  width =
+                    Math.round(
+                      width *
+                      MAX_IMAGE_SIZE /
+                      height
+                    );
+
+                  height =
+                    MAX_IMAGE_SIZE;
+
+                }
+
+              }
+
+
+              const canvas =
+                document.createElement(
+                  "canvas"
                 );
 
-              width = MAX_IMAGE_SIZE;
 
-            } else {
+              canvas.width =
+                width;
 
-              width =
-                Math.round(
-                  width * MAX_IMAGE_SIZE / height
+              canvas.height =
+                height;
+
+
+              const ctx =
+                canvas.getContext(
+                  "2d"
                 );
 
-              height = MAX_IMAGE_SIZE;
-            }
-          }
 
-          const canvas = document.createElement("canvas");
+              ctx.drawImage(
+                img,
+                0,
+                0,
+                width,
+                height
+              );
 
-          canvas.width = width;
-          canvas.height = height;
 
-          const ctx = canvas.getContext("2d");
+              const dataUrl =
+                canvas.toDataURL(
+                  "image/jpeg",
+                  JPEG_QUALITY
+                );
 
-          ctx.drawImage(
-            img,
-            0,
-            0,
-            width,
-            height
-          );
 
-          const dataUrl =
-            canvas.toDataURL(
-              "image/jpeg",
-              JPEG_QUALITY
-            );
+              resolve({
 
-          resolve({
-            mimeType: "image/jpeg",
-            base64: dataUrl.split(",")[1],
-            originalName: file.name
-          });
+                mimeType:
+                  "image/jpeg",
+
+                base64:
+                  dataUrl.split(",")[1],
+
+                originalName:
+                  file.name
+
+              });
+
+            };
+
+
+          img.onerror =
+            reject;
+
+
+          img.src =
+            reader.result;
 
         };
 
-        img.onerror = reject;
 
-        img.src = reader.result;
-
-      };
-
-      reader.onerror = reject;
-
-      reader.readAsDataURL(file);
-
-    });
-
-  }
+      reader.onerror =
+        reject;
 
 
-  // ============================================================
-  // DELAY
-  // ============================================================
-
-  function sleep(ms) {
-
-    return new Promise(resolve => {
-      setTimeout(resolve, ms);
-    });
-
-  }
-
-
-  // ============================================================
-  // SEND BATCH
-  // ============================================================
-
-  async function sendBatch(batch, batchNumber, totalBatches) {
-
-    let lastError = null;
-
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-
-      try {
-
-        statusEl.textContent =
-          "Sending batch " +
-          batchNumber +
-          " of " +
-          totalBatches +
-          "...\n" +
-          "Attempt " +
-          attempt +
-          " of " +
-          MAX_RETRIES;
-
-        const response = await fetch(
-          APPS_SCRIPT_URL,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "text/plain;charset=utf-8"
-            },
-
-            body: JSON.stringify({
-              action: "extract",
-              images: batch
-            })
-          }
-        );
-
-
-        const text = await response.text();
-
-        let data;
-
-        try {
-
-          data = JSON.parse(text);
-
-        } catch (parseError) {
-
-          throw new Error(
-            "Invalid response from Apps Script: " +
-            text.substring(0, 500)
-          );
-
-        }
-
-
-        if (!response.ok) {
-
-          throw new Error(
-            data.error ||
-            "Apps Script HTTP " + response.status
-          );
-
-        }
-
-
-        if (!data || !Array.isArray(data)) {
-
-          if (data && data.error) {
-            throw new Error(data.error);
-          }
-
-          throw new Error(
-            "Unexpected response from Apps Script."
-          );
-
-        }
-
-
-        return data;
-
-      } catch (error) {
-
-        lastError = error;
-
-        console.error(
-          "Batch attempt failed:",
-          error
-        );
-
-        if (attempt < MAX_RETRIES) {
-
-          await sleep(3000 * attempt);
-
-        }
-
-      }
-
-    }
-
-    throw lastError;
-
-  }
-
-
-  // ============================================================
-  // START EXTRACTION
-  // ============================================================
-
-  async function startExtraction() {
-
-    if (selectedFiles.length === 0) {
-
-      alert("Please select receipt images first.");
-
-      return;
-    }
-
-
-    if (
-      !APPS_SCRIPT_URL ||
-      APPS_SCRIPT_URL.includes("PASTE_YOUR")
-    ) {
-
-      alert(
-        "Please put your Apps Script Web App URL into APPS_SCRIPT_URL first."
+      reader.readAsDataURL(
+        file
       );
 
-      return;
     }
+  );
+
+}
 
 
-    extractBtn.disabled = true;
-    copyBtn.disabled = true;
-    downloadBtn.disabled = true;
-    csvBtn.disabled = true;
-    saveBtn.disabled = true;
+// ============================================================
+// SLEEP
+// ============================================================
 
-    extractedResults = [];
+function sleep(ms) {
 
-    renderResults();
+  return new Promise(
+    function(resolve) {
 
+      setTimeout(
+        resolve,
+        ms
+      );
+
+    }
+  );
+
+}
+
+
+// ============================================================
+// SEND ONE BATCH
+// ============================================================
+
+async function sendBatch(
+  batch,
+  batchNumber,
+  totalBatches
+) {
+
+  let lastError = null;
+
+
+  for (
+    let attempt = 1;
+    attempt <= MAX_RETRIES + 1;
+    attempt++
+  ) {
 
     try {
 
       statusEl.textContent =
-        "Compressing images...";
+        "Processing batch " +
+        batchNumber +
+        " of " +
+        totalBatches +
+        "...\n" +
+        "Gemini is processing " +
+        batch.length +
+        (
+          batch.length === 1
+            ? " receipt"
+            : " receipts"
+        ) +
+        ".";
 
-      const compressedImages = [];
+
+      const response =
+        await fetch(
+          APPS_SCRIPT_URL,
+          {
+
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "text/plain;charset=utf-8"
+            },
+
+            body:
+              JSON.stringify({
+
+                action:
+                  "extract",
+
+                images:
+                  batch
+
+              })
+
+          }
+        );
 
 
-      for (
-        let i = 0;
-        i < selectedFiles.length;
-        i++
-      ) {
+      const text =
+        await response.text();
 
-        progressEl.textContent =
-          "Preparing image " +
-          (i + 1) +
-          " of " +
-          selectedFiles.length;
 
-        const compressed =
-          await compressImage(selectedFiles[i]);
+      let data;
 
-        compressedImages.push(compressed);
+
+      try {
+
+        data =
+          JSON.parse(text);
+
+      } catch (error) {
+
+        throw new Error(
+          "Invalid response from Apps Script: " +
+          text.substring(0, 500)
+        );
 
       }
 
 
-      const batches = [];
+      if (!response.ok) {
 
-      for (
-        let i = 0;
-        i < compressedImages.length;
-        i += BATCH_SIZE
-      ) {
-
-        batches.push(
-          compressedImages.slice(
-            i,
-            i + BATCH_SIZE
+        throw new Error(
+          data.error ||
+          (
+            "Apps Script HTTP " +
+            response.status
           )
         );
 
       }
 
 
-      let processed = 0;
-      let successful = 0;
-      let failed = 0;
+      if (!Array.isArray(data)) {
+
+        if (data && data.error) {
+
+          throw new Error(
+            data.error
+          );
+
+        }
 
 
-      for (
-        let i = 0;
-        i < batches.length;
-        i++
+        throw new Error(
+          "Unexpected Apps Script response."
+        );
+
+      }
+
+
+      return data;
+
+
+    } catch (error) {
+
+      lastError =
+        error;
+
+
+      console.error(
+        "Batch request failed:",
+        error
+      );
+
+
+      if (
+        attempt <= MAX_RETRIES
       ) {
 
-        const batch = batches[i];
+        /*
+          Only one complete retry.
 
-        progressEl.textContent =
-          "Processing batch " +
-          (i + 1) +
-          " of " +
-          batches.length;
+          Very short delay.
+        */
 
+        await sleep(1000);
 
-        try {
+      }
 
-          const results =
-            await sendBatch(
-              batch,
-              i + 1,
-              batches.length
-            );
+    }
+
+  }
 
 
-          results.forEach(result => {
+  throw lastError;
 
-            if (result.success === false) {
+}
+
+
+// ============================================================
+// START EXTRACTION
+// ============================================================
+
+async function startExtraction() {
+
+  if (
+    selectedFiles.length === 0
+  ) {
+
+    alert(
+      "Please select receipt images first."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    !APPS_SCRIPT_URL ||
+    APPS_SCRIPT_URL.includes(
+      "PASTE_YOUR"
+    )
+  ) {
+
+    alert(
+      "Please put your Apps Script Web App URL into APPS_SCRIPT_URL first."
+    );
+
+    return;
+
+  }
+
+
+  extractBtn.disabled = true;
+
+  copyBtn.disabled = true;
+
+  downloadBtn.disabled = true;
+
+  csvBtn.disabled = true;
+
+  saveBtn.disabled = true;
+
+
+  extractedResults = [];
+
+  renderResults();
+
+
+  try {
+
+    // --------------------------------------------------------
+    // COMPRESS
+    // --------------------------------------------------------
+
+    statusEl.textContent =
+      "Preparing image...";
+
+
+    const compressedImages = [];
+
+
+    for (
+      let i = 0;
+      i < selectedFiles.length;
+      i++
+    ) {
+
+      progressEl.textContent =
+        "Preparing image " +
+        (i + 1) +
+        " of " +
+        selectedFiles.length;
+
+
+      const image =
+        await compressImage(
+          selectedFiles[i]
+        );
+
+
+      compressedImages.push(
+        image
+      );
+
+    }
+
+
+    // --------------------------------------------------------
+    // CREATE BATCHES
+    // --------------------------------------------------------
+
+    const batches = [];
+
+
+    for (
+      let i = 0;
+      i < compressedImages.length;
+      i += BATCH_SIZE
+    ) {
+
+      batches.push(
+        compressedImages.slice(
+          i,
+          i + BATCH_SIZE
+        )
+      );
+
+    }
+
+
+    let processed = 0;
+
+    let successful = 0;
+
+    let failed = 0;
+
+
+    // --------------------------------------------------------
+    // PROCESS BATCHES
+    // --------------------------------------------------------
+
+    for (
+      let i = 0;
+      i < batches.length;
+      i++
+    ) {
+
+      const batch =
+        batches[i];
+
+
+      progressEl.textContent =
+        "Processing batch " +
+        (i + 1) +
+        " of " +
+        batches.length;
+
+
+      try {
+
+        const results =
+          await sendBatch(
+            batch,
+            i + 1,
+            batches.length
+          );
+
+
+        results.forEach(
+          function(result) {
+
+            if (
+              result.success === false
+            ) {
 
               failed++;
 
@@ -824,41 +1143,54 @@
 
             }
 
-            extractedResults.push(result);
 
-          });
+            extractedResults.push(
+              result
+            );
 
-
-          processed += batch.length;
-
-
-        } catch (error) {
-
-          console.error(
-            "Batch completely failed:",
-            error
-          );
+          }
+        );
 
 
-          /*
-            Preserve one failure result per receipt.
-          */
+        processed +=
+          batch.length;
 
-          batch.forEach((image, index) => {
+
+      } catch (error) {
+
+        console.error(
+          "Batch failed:",
+          error
+        );
+
+
+        /*
+          Create one failure entry
+          for every receipt in the batch.
+        */
+
+        batch.forEach(
+          function(image) {
 
             extractedResults.push({
 
-              success: false,
+              success:
+                false,
 
-              company: "UNKNOWN",
+              company:
+                "UNKNOWN",
 
-              item: "UNKNOWN",
+              item:
+                "UNKNOWN",
 
-              date: "UNKNOWN",
+              date:
+                "UNKNOWN",
 
-              price: "UNKNOWN",
+              price:
+                "UNKNOWN",
 
-              transactionType: "OTHER",
+              transactionType:
+                "OTHER",
 
               autocount:
                 "ERROR - " +
@@ -873,91 +1205,109 @@
 
             });
 
+
             failed++;
 
-          });
-
-          processed += batch.length;
-
-        }
+          }
+        );
 
 
-        processedCountEl.textContent = processed;
-        successCountEl.textContent = successful;
-        failedCountEl.textContent = failed;
-
-
-        renderResults();
-
-
-        /*
-          Delay between batches.
-
-          Do not delay after the final batch.
-        */
-
-        if (i < batches.length - 1) {
-
-          statusEl.textContent =
-            "Batch " +
-            (i + 1) +
-            " completed.\n" +
-            "Waiting before next batch...";
-
-          await sleep(
-            DELAY_BETWEEN_BATCHES
-          );
-
-        }
+        processed +=
+          batch.length;
 
       }
 
 
-      statusEl.textContent =
-        "Extraction completed.\n" +
-        "Processed: " + processed +
-        "\nSuccess: " + successful +
-        "\nFailed: " + failed;
+      processedCountEl.textContent =
+        processed;
+
+      successCountEl.textContent =
+        successful;
+
+      failedCountEl.textContent =
+        failed;
 
 
-      progressEl.textContent =
-        "Finished.";
-
-      updateButtons();
+      renderResults();
 
 
-    } catch (error) {
+      // ------------------------------------------------------
+      // Delay only between MULTIPLE batches
+      // ------------------------------------------------------
 
-      console.error(error);
+      if (
+        i < batches.length - 1
+      ) {
 
-      statusEl.textContent =
-        "ERROR: " +
-        (error.message || error);
+        await sleep(
+          DELAY_BETWEEN_BATCHES
+        );
 
-      progressEl.textContent =
-        "Extraction stopped.";
-
-    } finally {
-
-      extractBtn.disabled = false;
+      }
 
     }
 
+
+    statusEl.textContent =
+      "Extraction completed.\n" +
+      "Processed: " +
+      processed +
+      "\nSuccess: " +
+      successful +
+      "\nFailed: " +
+      failed;
+
+
+    progressEl.textContent =
+      "Finished.";
+
+
+    updateButtons();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    statusEl.textContent =
+      "ERROR: " +
+      (
+        error.message ||
+        error
+      );
+
+
+    progressEl.textContent =
+      "Extraction stopped.";
+
+  } finally {
+
+    extractBtn.disabled =
+      false;
+
   }
 
+}
 
-  // ============================================================
-  // RENDER RESULTS
-  // ============================================================
 
-  function renderResults() {
+// ============================================================
+// RENDER RESULTS
+// ============================================================
 
-    resultsEl.innerHTML = "";
+function renderResults() {
 
-    extractedResults.forEach((result, index) => {
+  resultsEl.innerHTML = "";
+
+
+  extractedResults.forEach(
+    function(result, index) {
 
       const card =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
+
 
       card.className =
         "result-card" +
@@ -969,16 +1319,23 @@
 
 
       const number =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
+
 
       number.className =
         "result-number";
 
+
       number.textContent =
-        "Receipt " + (index + 1);
+        "Receipt " +
+        (index + 1);
 
 
-      card.appendChild(number);
+      card.appendChild(
+        number
+      );
 
 
       addField(
@@ -987,11 +1344,13 @@
         result.company
       );
 
+
       addField(
         card,
         "Item",
         result.item
       );
+
 
       addField(
         card,
@@ -999,11 +1358,13 @@
         result.date
       );
 
+
       addField(
         card,
         "Price",
         result.price
       );
+
 
       addField(
         card,
@@ -1013,31 +1374,47 @@
 
 
       const autoLabel =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
-      autoLabel.className = "field";
+
+      autoLabel.className =
+        "field";
+
 
       autoLabel.innerHTML =
         "<strong>AutoCount:</strong>";
 
 
-      card.appendChild(autoLabel);
+      card.appendChild(
+        autoLabel
+      );
 
 
       const auto =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
+
 
       auto.className =
         "autocount";
 
+
       auto.textContent =
-        result.autocount || "UNKNOWN";
+        result.autocount ||
+        "UNKNOWN";
 
 
-      card.appendChild(auto);
+      card.appendChild(
+        auto
+      );
 
 
-      if (result.modelUsed) {
+      if (
+        result.modelUsed
+      ) {
 
         addField(
           card,
@@ -1048,7 +1425,9 @@
       }
 
 
-      if (result.error) {
+      if (
+        result.error
+      ) {
 
         addField(
           card,
@@ -1059,459 +1438,579 @@
       }
 
 
-      resultsEl.appendChild(card);
+      resultsEl.appendChild(
+        card
+      );
 
-    });
+    }
+  );
 
-  }
+}
 
 
-  function addField(
-    parent,
-    label,
-    value
-  ) {
+// ============================================================
+// ADD FIELD
+// ============================================================
 
-    const div =
-      document.createElement("div");
+function addField(
+  parent,
+  label,
+  value
+) {
 
-    div.className = "field";
-
-    const strong =
-      document.createElement("strong");
-
-    strong.textContent =
-      label + ":";
-
-    div.appendChild(strong);
-
-    div.appendChild(
-      document.createTextNode(
-        " " +
-        (
-          value === undefined ||
-          value === null ||
-          value === ""
-            ? "UNKNOWN"
-            : value
-        )
-      )
+  const div =
+    document.createElement(
+      "div"
     );
 
-    parent.appendChild(div);
+
+  div.className =
+    "field";
+
+
+  const strong =
+    document.createElement(
+      "strong"
+    );
+
+
+  strong.textContent =
+    label + ":";
+
+
+  div.appendChild(
+    strong
+  );
+
+
+  div.appendChild(
+    document.createTextNode(
+      " " +
+      (
+        value === undefined ||
+        value === null ||
+        value === ""
+          ? "UNKNOWN"
+          : value
+      )
+    )
+  );
+
+
+  parent.appendChild(
+    div
+  );
+
+}
+
+
+// ============================================================
+// COPY AUTOCOUNT
+// ============================================================
+
+async function copyAutoCount() {
+
+  const lines =
+    extractedResults
+      .filter(function(r) {
+
+        return r.success !== false;
+
+      })
+      .map(function(r) {
+
+        return r.autocount ||
+          "UNKNOWN";
+
+      });
+
+
+  if (
+    lines.length === 0
+  ) {
+
+    alert(
+      "No successful results to copy."
+    );
+
+    return;
 
   }
 
 
-  // ============================================================
-  // COPY AUTOCOUNT
-  // ============================================================
-
-  async function copyAutoCount() {
-
-    if (extractedResults.length === 0) {
-      return;
-    }
+  const text =
+    lines.join("\n");
 
 
-    const lines =
-      extractedResults
-        .filter(r => r.success !== false)
-        .map(r => r.autocount || "UNKNOWN");
+  try {
+
+    await navigator.clipboard.writeText(
+      text
+    );
 
 
-    if (lines.length === 0) {
-
-      alert("No successful results to copy.");
-
-      return;
-
-    }
+    statusEl.textContent =
+      "AutoCount text copied.";
 
 
-    const text =
-      lines.join("\n");
+  } catch (error) {
 
-
-    try {
-
-      await navigator.clipboard.writeText(text);
-
-      statusEl.textContent =
-        "AutoCount text copied.";
-
-    } catch (error) {
-
-      /*
-        Fallback for browsers that block
-        navigator.clipboard.
-      */
-
-      const textarea =
-        document.createElement("textarea");
-
-      textarea.value = text;
-
-      document.body.appendChild(textarea);
-
-      textarea.select();
-
-      document.execCommand("copy");
-
-      textarea.remove();
-
-      statusEl.textContent =
-        "AutoCount text copied.";
-
-    }
-
-  }
-
-
-  // ============================================================
-  // DOWNLOAD TXT
-  // ============================================================
-
-  function downloadTXT() {
-
-    const lines =
-      extractedResults
-        .filter(r => r.success !== false)
-        .map(r => r.autocount || "UNKNOWN");
-
-
-    if (lines.length === 0) {
-
-      alert("No successful results.");
-
-      return;
-
-    }
-
-
-    const blob =
-      new Blob(
-        [lines.join("\n")],
-        {
-          type: "text/plain;charset=utf-8"
-        }
+    const textarea =
+      document.createElement(
+        "textarea"
       );
 
 
-    const url =
-      URL.createObjectURL(blob);
+    textarea.value =
+      text;
 
 
-    const a =
-      document.createElement("a");
-
-    a.href = url;
-
-    a.download =
-      "autocount_output.txt";
-
-    a.click();
+    document.body.appendChild(
+      textarea
+    );
 
 
-    URL.revokeObjectURL(url);
+    textarea.select();
+
+
+    document.execCommand(
+      "copy"
+    );
+
+
+    textarea.remove();
+
+
+    statusEl.textContent =
+      "AutoCount text copied.";
+
+  }
+
+}
+
+
+// ============================================================
+// DOWNLOAD TXT
+// ============================================================
+
+function downloadTXT() {
+
+  const lines =
+    extractedResults
+      .filter(function(r) {
+
+        return r.success !== false;
+
+      })
+      .map(function(r) {
+
+        return r.autocount ||
+          "UNKNOWN";
+
+      });
+
+
+  if (
+    lines.length === 0
+  ) {
+
+    alert(
+      "No successful results."
+    );
+
+    return;
 
   }
 
 
-  // ============================================================
-  // CSV DOWNLOAD
-  // ============================================================
+  const blob =
+    new Blob(
+      [
+        lines.join("\n")
+      ],
+      {
+        type:
+          "text/plain;charset=utf-8"
+      }
+    );
 
-  function csvEscape(value) {
 
-    if (
-      value === null ||
-      value === undefined
-    ) {
-      return "";
-    }
+  const url =
+    URL.createObjectURL(
+      blob
+    );
 
-    value =
-      String(value);
 
-    return '"' +
-      value.replace(
+  const a =
+    document.createElement(
+      "a"
+    );
+
+
+  a.href =
+    url;
+
+
+  a.download =
+    "autocount_output.txt";
+
+
+  a.click();
+
+
+  URL.revokeObjectURL(
+    url
+  );
+
+}
+
+
+// ============================================================
+// CSV
+// ============================================================
+
+function csvEscape(value) {
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
+
+    return "";
+
+  }
+
+
+  return '"' +
+    String(value)
+      .replace(
         /"/g,
         '""'
       ) +
-      '"';
+    '"';
+
+}
+
+
+function downloadCSV() {
+
+  if (
+    extractedResults.length === 0
+  ) {
+
+    alert(
+      "No results."
+    );
+
+    return;
 
   }
 
 
-  function downloadCSV() {
+  const header = [
 
-    if (extractedResults.length === 0) {
+    "Company",
+    "Item",
+    "Date",
+    "Price",
+    "Transaction Type",
+    "AutoCount",
+    "Model Used",
+    "Status"
 
-      alert("No results.");
-
-      return;
-
-    }
-
-
-    const header = [
-      "Company",
-      "Item",
-      "Date",
-      "Price",
-      "Transaction Type",
-      "AutoCount",
-      "Model Used",
-      "Status"
-    ];
+  ];
 
 
-    const rows =
-      extractedResults.map(r => [
+  const rows =
+    extractedResults.map(
+      function(r) {
 
-        r.company,
+        return [
 
-        r.item,
+          r.company,
 
-        r.date,
+          r.item,
 
-        r.price,
+          r.date,
 
-        r.transactionType,
+          r.price,
 
-        r.autocount,
+          r.transactionType,
 
-        r.modelUsed || "",
+          r.autocount,
 
-        r.success === false
-          ? "FAILED"
-          : "SUCCESS"
+          r.modelUsed || "",
 
-      ]);
+          r.success === false
+            ? "FAILED"
+            : "SUCCESS"
 
+        ];
 
-    const csv = [
-
-      header.map(csvEscape).join(","),
-
-      ...rows.map(
-        row =>
-          row.map(csvEscape).join(",")
-      )
-
-    ].join("\n");
+      }
+    );
 
 
-    const blob =
-      new Blob(
-        [csv],
+  const csv = [
+
+    header
+      .map(csvEscape)
+      .join(","),
+
+    ...rows.map(
+      function(row) {
+
+        return row
+          .map(csvEscape)
+          .join(",");
+
+      }
+    )
+
+  ].join("\n");
+
+
+  const blob =
+    new Blob(
+      [csv],
+      {
+        type:
+          "text/csv;charset=utf-8"
+      }
+    );
+
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+
+  const a =
+    document.createElement(
+      "a"
+    );
+
+
+  a.href =
+    url;
+
+
+  a.download =
+    "receipt_extraction.csv";
+
+
+  a.click();
+
+
+  URL.revokeObjectURL(
+    url
+  );
+
+}
+
+
+// ============================================================
+// SAVE TO GOOGLE SHEET
+// ============================================================
+
+async function saveToSheet() {
+
+  const successfulResults =
+    extractedResults.filter(
+      function(r) {
+
+        return r.success !== false;
+
+      }
+    );
+
+
+  if (
+    successfulResults.length === 0
+  ) {
+
+    alert(
+      "There are no successful results to save."
+    );
+
+    return;
+
+  }
+
+
+  saveBtn.disabled =
+    true;
+
+
+  statusEl.textContent =
+    "Saving to Google Sheet...";
+
+
+  try {
+
+    const response =
+      await fetch(
+        APPS_SCRIPT_URL,
         {
-          type: "text/csv;charset=utf-8"
-        }
-      );
 
+          method: "POST",
 
-    const url =
-      URL.createObjectURL(blob);
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
 
+          body:
+            JSON.stringify({
 
-    const a =
-      document.createElement("a");
-
-    a.href = url;
-
-    a.download =
-      "receipt_extraction.csv";
-
-    a.click();
-
-
-    URL.revokeObjectURL(url);
-
-  }
-
-
-  // ============================================================
-  // SAVE TO GOOGLE SHEET
-  // ============================================================
-
-  async function saveToSheet() {
-
-    if (extractedResults.length === 0) {
-
-      alert("No results to save.");
-
-      return;
-
-    }
-
-
-    const successfulResults =
-      extractedResults.filter(
-        r => r.success !== false
-      );
-
-
-    if (successfulResults.length === 0) {
-
-      alert(
-        "There are no successful results to save."
-      );
-
-      return;
-
-    }
-
-
-    saveBtn.disabled = true;
-
-    statusEl.textContent =
-      "Saving to Google Sheet...";
-
-
-    try {
-
-      const response =
-        await fetch(
-          APPS_SCRIPT_URL,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "text/plain;charset=utf-8"
-            },
-
-            body: JSON.stringify({
-
-              action: "save",
+              action:
+                "save",
 
               results:
                 successfulResults
 
             })
 
-          }
-        );
+        }
+      );
 
 
-      const text =
-        await response.text();
+    const text =
+      await response.text();
 
 
-      let data;
-
-      try {
-
-        data =
-          JSON.parse(text);
-
-      } catch {
-
-        throw new Error(
-          "Invalid response from Apps Script."
-        );
-
-      }
+    let data;
 
 
-      if (!response.ok || data.success === false) {
+    try {
 
-        throw new Error(
-          data.error ||
-          "Failed to save."
-        );
-
-      }
-
-
-      statusEl.textContent =
-        "Saved " +
-        successfulResults.length +
-        " receipt(s) to Google Sheet.";
-
+      data =
+        JSON.parse(text);
 
     } catch (error) {
 
-      console.error(error);
-
-      statusEl.textContent =
-        "SAVE ERROR: " +
-        error.message;
-
-    } finally {
-
-      saveBtn.disabled = false;
+      throw new Error(
+        "Invalid response from Apps Script."
+      );
 
     }
 
-  }
 
+    if (
+      !response.ok ||
+      data.success === false
+    ) {
 
-  // ============================================================
-  // CLEAR
-  // ============================================================
+      throw new Error(
+        data.error ||
+        "Failed to save."
+      );
 
-  function clearAll() {
+    }
 
-    selectedFiles = [];
-
-    extractedResults = [];
-
-    fileInput.value = "";
-
-    fileInfo.textContent =
-      "No images selected";
 
     statusEl.textContent =
-      "Ready.";
-
-    progressEl.textContent =
-      "";
-
-    renderResults();
-
-    updateFileInfo();
-
-    updateButtons();
-
-  }
+      "Saved " +
+      successfulResults.length +
+      " receipt(s) to Google Sheet.";
 
 
-  // ============================================================
-  // BUTTON STATE
-  // ============================================================
+  } catch (error) {
 
-  function updateButtons() {
+    console.error(error);
 
-    extractBtn.disabled =
-      selectedFiles.length === 0;
 
-    const hasResults =
-      extractedResults.length > 0;
+    statusEl.textContent =
+      "SAVE ERROR: " +
+      error.message;
 
-    copyBtn.disabled =
-      !hasResults;
 
-    downloadBtn.disabled =
-      !hasResults;
-
-    csvBtn.disabled =
-      !hasResults;
+  } finally {
 
     saveBtn.disabled =
-      !hasResults;
+      false;
 
   }
 
+}
 
-  // ============================================================
-  // INITIAL STATE
-  // ============================================================
+
+// ============================================================
+// CLEAR
+// ============================================================
+
+function clearAll() {
+
+  selectedFiles = [];
+
+  extractedResults = [];
+
+  fileInput.value = "";
+
+  fileInfo.textContent =
+    "No images selected";
+
+  statusEl.textContent =
+    "Ready.";
+
+  progressEl.textContent =
+    "";
+
+  processedCountEl.textContent =
+    "0";
+
+  successCountEl.textContent =
+    "0";
+
+  failedCountEl.textContent =
+    "0";
+
+  renderResults();
 
   updateFileInfo();
+
   updateButtons();
+
+}
+
+
+// ============================================================
+// BUTTON STATES
+// ============================================================
+
+function updateButtons() {
+
+  extractBtn.disabled =
+    selectedFiles.length === 0;
+
+
+  const hasResults =
+    extractedResults.length > 0;
+
+
+  copyBtn.disabled =
+    !hasResults;
+
+  downloadBtn.disabled =
+    !hasResults;
+
+  csvBtn.disabled =
+    !hasResults;
+
+  saveBtn.disabled =
+    !hasResults;
+
+}
+
+
+// ============================================================
+// INITIALIZE
+// ============================================================
+
+updateFileInfo();
+
+updateButtons();
 
 </script>
 
