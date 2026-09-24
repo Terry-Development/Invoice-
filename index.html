@@ -1,1486 +1,1519 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<title>Receipt Extractor</title>
-
-<style>
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-
-    margin: 0;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    background: #f5f7fb;
-
-    color: #222;
-}
-
-
-.container {
-
-    max-width: 1100px;
-
-    margin: 40px auto;
-
-    padding: 0 20px;
-
-}
-
-
-h1 {
-
-    text-align: center;
-
-    margin-bottom: 10px;
-
-}
-
-
-.subtitle {
-
-    text-align: center;
-
-    color: #666;
-
-    margin-bottom: 30px;
-
-}
-
-
-.upload-box {
-
-    background: white;
-
-    border-radius: 12px;
-
-    padding: 25px;
-
-    box-shadow:
-        0 3px 15px rgba(0,0,0,0.08);
-
-    margin-bottom: 25px;
-
-}
-
-
-input[type="file"] {
-
-    width: 100%;
-
-    padding: 15px;
-
-    border: 2px dashed #bbb;
-
-    border-radius: 8px;
-
-    background: #fafafa;
-
-}
-
-
-.buttons {
-
-    display: flex;
-
-    gap: 10px;
-
-    flex-wrap: wrap;
-
-    margin-top: 15px;
-
-}
-
-
-button {
-
-    border: none;
-
-    border-radius: 7px;
-
-    padding: 11px 18px;
-
-    cursor: pointer;
-
-    font-size: 14px;
-
-}
-
-
-#extractBtn {
-
-    background: #2563eb;
-
-    color: white;
-
-}
-
-
-#saveBtn {
-
-    background: #16a34a;
-
-    color: white;
-
-}
-
-
-#copyBtn {
-
-    background: #7c3aed;
-
-    color: white;
-
-}
-
-
-#downloadBtn {
-
-    background: #ea580c;
-
-    color: white;
-
-}
-
-
-#clearBtn {
-
-    background: #dc2626;
-
-    color: white;
-
-}
-
-
-button:disabled {
-
-    opacity: 0.5;
-
-    cursor: not-allowed;
-
-}
-
-
-.status {
-
-    margin-top: 15px;
-
-    padding: 12px;
-
-    border-radius: 7px;
-
-    background: #f1f5f9;
-
-    white-space: pre-wrap;
-
-}
-
-
-.results {
-
-    margin-top: 25px;
-
-}
-
-
-.card {
-
-    background: white;
-
-    border-radius: 12px;
-
-    padding: 20px;
-
-    margin-bottom: 15px;
-
-    box-shadow:
-        0 3px 15px rgba(0,0,0,0.07);
-
-}
-
-
-.card-header {
-
-    display: flex;
-
-    justify-content: space-between;
-
-    gap: 15px;
-
-    margin-bottom: 15px;
-
-    font-weight: bold;
-
-}
-
-
-.field {
-
-    margin-bottom: 10px;
-
-}
-
-
-.label {
-
-    color: #777;
-
-    font-size: 12px;
-
-    text-transform: uppercase;
-
-    margin-bottom: 3px;
-
-}
-
-
-.value {
-
-    font-size: 16px;
-
-    font-weight: 500;
-
-}
-
-
-.autocount {
-
-    margin-top: 15px;
-
-    padding: 13px;
-
-    background: #f8fafc;
-
-    border-radius: 7px;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    font-size: 14px;
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    gap: 20px;
-
-}
-
-
-.autocount-text {
-
-    flex: 1;
-
-}
-
-
-.autocount-price {
-
-    font-weight: bold;
-
-    white-space: nowrap;
-
-}
-
-
-.success {
-
-    color: #15803d;
-
-}
-
-
-.error {
-
-    color: #dc2626;
-
-}
-
-
-.processing {
-
-    color: #b45309;
-
-}
-
-
-.hidden {
-
-    display: none;
-
-}
-
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Receipt → AutoCount</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .upload-area {
+      border: 2px dashed #aaa;
+      border-radius: 12px;
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .upload-area:hover {
+      border-color: #333;
+      background: #fafafa;
+    }
+
+    .upload-area input {
+      display: none;
+    }
+
+    .upload-button {
+      display: inline-block;
+      padding: 12px 20px;
+      background: #222;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .file-info {
+      margin-top: 10px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+    }
+
+    .primary {
+      background: #222;
+      color: white;
+    }
+
+    .secondary {
+      background: #e9e9e9;
+      color: #222;
+    }
+
+    .danger {
+      background: #d9534f;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .controls {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f1f1f1;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+
+    .progress {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+      text-align: center;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .result-card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 12px;
+      background: #fff;
+    }
+
+    .result-card.failed {
+      border-color: #d9534f;
+      background: #fff5f5;
+    }
+
+    .result-number {
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .field {
+      margin: 5px 0;
+      word-break: break-word;
+    }
+
+    .field strong {
+      display: inline-block;
+      min-width: 145px;
+    }
+
+    .autocount {
+      background: #f7f7f7;
+      padding: 10px;
+      border-radius: 7px;
+      margin-top: 10px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .stat {
+      background: #f4f4f4;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 3px;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .field strong {
+        display: block;
+        min-width: auto;
+      }
+
+      button {
+        width: 100%;
+        margin: 4px 0;
+      }
+    }
+  </style>
 </head>
-
 
 <body>
 
-
 <div class="container">
 
+  <h1>Receipt → AutoCount</h1>
+  <div class="subtitle">
+    Upload receipts and extract accounting information automatically
+  </div>
 
-<h1>Receipt Extractor</h1>
+  <div class="card">
+
+    <div class="upload-area" id="uploadArea">
+      <label for="fileInput">
+        <span class="upload-button">Select Receipt Images</span>
+      </label>
+
+      <input
+        type="file"
+        id="fileInput"
+        accept="image/*"
+        multiple
+      >
+
+      <div class="file-info" id="fileInfo">
+        No images selected
+      </div>
+    </div>
+
+    <div class="controls">
+
+      <button
+        class="primary"
+        id="extractBtn"
+        onclick="startExtraction()"
+        disabled
+      >
+        Extract Receipts
+      </button>
+
+      <button
+        class="secondary"
+        id="copyBtn"
+        onclick="copyAutoCount()"
+        disabled
+      >
+        Copy AutoCount
+      </button>
+
+      <button
+        class="secondary"
+        id="downloadBtn"
+        onclick="downloadTXT()"
+        disabled
+      >
+        Download TXT
+      </button>
+
+      <button
+        class="secondary"
+        id="csvBtn"
+        onclick="downloadCSV()"
+        disabled
+      >
+        Download CSV
+      </button>
+
+      <button
+        class="secondary"
+        id="saveBtn"
+        onclick="saveToSheet()"
+        disabled
+      >
+        Save to Google Sheet
+      </button>
+
+      <button
+        class="danger"
+        id="clearBtn"
+        onclick="clearAll()"
+      >
+        Clear
+      </button>
+
+    </div>
+
+    <div class="status" id="status">
+      Ready.
+    </div>
+
+    <div class="progress" id="progress"></div>
+
+  </div>
 
 
-<div class="subtitle">
-    Upload receipts or invoices and extract accounting information automatically.
-</div>
+  <div class="card">
 
+    <div class="results-header">
+      <h2>Results</h2>
+    </div>
 
-<div class="upload-box">
+    <div class="stats">
 
+      <div class="stat">
+        <div class="stat-number" id="selectedCount">0</div>
+        <div class="stat-label">Selected</div>
+      </div>
 
-<input
-    type="file"
-    id="fileInput"
-    accept="image/*"
-    multiple
->
+      <div class="stat">
+        <div class="stat-number" id="processedCount">0</div>
+        <div class="stat-label">Processed</div>
+      </div>
 
+      <div class="stat">
+        <div class="stat-number" id="successCount">0</div>
+        <div class="stat-label">Success</div>
+      </div>
 
-<div class="buttons">
+      <div class="stat">
+        <div class="stat-number" id="failedCount">0</div>
+        <div class="stat-label">Failed</div>
+      </div>
 
-<button id="extractBtn">
-    Extract Receipts
-</button>
+    </div>
 
-<button id="saveBtn" disabled>
-    Save to Google Sheets
-</button>
+    <div id="results"></div>
 
-<button id="copyBtn" disabled>
-    Copy AutoCount
-</button>
-
-<button id="downloadBtn" disabled>
-    Download CSV
-</button>
-
-<button id="clearBtn">
-    Clear
-</button>
-
-</div>
-
-
-<div
-    id="status"
-    class="status hidden">
-</div>
-
-
-</div>
-
-
-<div
-    id="results"
-    class="results">
-</div>
-
+  </div>
 
 </div>
 
 
 <script>
 
+  // ============================================================
+  // CONFIGURATION
+  // ============================================================
 
-/* =========================================================
-   SETTINGS
-   ========================================================= */
+  const APPS_SCRIPT_URL =
+    "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
-const APPS_SCRIPT_URL =
-    'https://script.google.com/macros/s/AKfycbxGYlLkkvFXLxtLTjJMn7DVpPLQR4QASmR7W9ZKlr150muzI5ywiNictWe15jrYohC9ww/exec';
+  /*
+    Keep batches small.
 
+    5 receipts per Gemini request gives the API more breathing room
+    than sending 10 images at once.
+  */
+  const BATCH_SIZE = 5;
 
-const BATCH_SIZE = 10;
+  /*
+    Images are resized before being sent to Apps Script.
+  */
+  const MAX_IMAGE_SIZE = 1200;
 
-const MAX_IMAGE_SIZE = 1200;
+  /*
+    JPEG quality.
+  */
+  const JPEG_QUALITY = 0.70;
 
-const JPEG_QUALITY = 0.70;
+  /*
+    Frontend retry count.
 
-const MAX_RETRIES = 3;
+    Apps Script ALSO has model-level retries.
+    Keeping this at 2 prevents excessive duplicate requests.
+  */
+  const MAX_RETRIES = 2;
 
-const DELAY_BETWEEN_BATCHES = 3000;
-
-
-/* =========================================================
-   VARIABLES
-   ========================================================= */
-
-let extractedResults = [];
-
-
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
-
-const fileInput =
-    document.getElementById('fileInput');
-
-const extractBtn =
-    document.getElementById('extractBtn');
-
-const saveBtn =
-    document.getElementById('saveBtn');
-
-const copyBtn =
-    document.getElementById('copyBtn');
-
-const downloadBtn =
-    document.getElementById('downloadBtn');
-
-const clearBtn =
-    document.getElementById('clearBtn');
-
-const status =
-    document.getElementById('status');
-
-const resultsContainer =
-    document.getElementById('results');
+  /*
+    Delay between batches.
+  */
+  const DELAY_BETWEEN_BATCHES = 5000;
 
 
-/* =========================================================
-   STATUS
-   ========================================================= */
+  // ============================================================
+  // GLOBAL VARIABLES
+  // ============================================================
 
-function showStatus(message, type = '') {
-
-    status.classList.remove('hidden');
-
-    status.className =
-        'status ' + type;
-
-    status.textContent = message;
-
-}
+  let selectedFiles = [];
+  let extractedResults = [];
 
 
-function sleep(ms) {
+  // ============================================================
+  // ELEMENTS
+  // ============================================================
 
-    return new Promise(
-        resolve => setTimeout(resolve, ms)
-    );
+  const fileInput = document.getElementById("fileInput");
+  const fileInfo = document.getElementById("fileInfo");
+  const uploadArea = document.getElementById("uploadArea");
 
-}
+  const extractBtn = document.getElementById("extractBtn");
+  const copyBtn = document.getElementById("copyBtn");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const csvBtn = document.getElementById("csvBtn");
+  const saveBtn = document.getElementById("saveBtn");
+
+  const statusEl = document.getElementById("status");
+  const progressEl = document.getElementById("progress");
+  const resultsEl = document.getElementById("results");
+
+  const selectedCountEl = document.getElementById("selectedCount");
+  const processedCountEl = document.getElementById("processedCount");
+  const successCountEl = document.getElementById("successCount");
+  const failedCountEl = document.getElementById("failedCount");
 
 
-/* =========================================================
-   IMAGE COMPRESSION
-   ========================================================= */
+  // ============================================================
+  // FILE SELECTION
+  // ============================================================
 
-function compressImage(file) {
+  fileInput.addEventListener("change", function () {
+
+    selectedFiles = Array.from(this.files);
+
+    updateFileInfo();
+
+    extractedResults = [];
+    renderResults();
+
+    updateButtons();
+
+  });
+
+
+  uploadArea.addEventListener("dragover", function (event) {
+    event.preventDefault();
+  });
+
+
+  uploadArea.addEventListener("drop", function (event) {
+
+    event.preventDefault();
+
+    selectedFiles = Array.from(event.dataTransfer.files)
+      .filter(file => file.type.startsWith("image/"));
+
+    updateFileInfo();
+
+    extractedResults = [];
+    renderResults();
+
+    updateButtons();
+
+  });
+
+
+  function updateFileInfo() {
+
+    if (selectedFiles.length === 0) {
+
+      fileInfo.textContent = "No images selected";
+
+    } else {
+
+      fileInfo.textContent =
+        selectedFiles.length +
+        " image" +
+        (selectedFiles.length === 1 ? "" : "s") +
+        " selected";
+
+    }
+
+    selectedCountEl.textContent = selectedFiles.length;
+  }
+
+
+  // ============================================================
+  // IMAGE COMPRESSION
+  // ============================================================
+
+  function compressImage(file) {
 
     return new Promise((resolve, reject) => {
 
-        const reader =
-            new FileReader();
+      const reader = new FileReader();
 
+      reader.onload = function () {
 
-        reader.onload = function(event) {
+        const img = new Image();
 
-            const img =
-                new Image();
+        img.onload = function () {
 
+          let width = img.width;
+          let height = img.height;
 
-            img.onload = function() {
+          /*
+            Resize while maintaining aspect ratio.
+          */
 
-                let width = img.width;
+          if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
 
-                let height = img.height;
+            if (width > height) {
 
-
-                if (
-                    width > MAX_IMAGE_SIZE ||
-                    height > MAX_IMAGE_SIZE
-                ) {
-
-                    const scale =
-                        Math.min(
-                            MAX_IMAGE_SIZE / width,
-                            MAX_IMAGE_SIZE / height
-                        );
-
-                    width =
-                        Math.round(width * scale);
-
-                    height =
-                        Math.round(height * scale);
-
-                }
-
-
-                const canvas =
-                    document.createElement('canvas');
-
-
-                canvas.width = width;
-
-                canvas.height = height;
-
-
-                const ctx =
-                    canvas.getContext('2d');
-
-
-                ctx.drawImage(
-                    img,
-                    0,
-                    0,
-                    width,
-                    height
+              height =
+                Math.round(
+                  height * MAX_IMAGE_SIZE / width
                 );
 
+              width = MAX_IMAGE_SIZE;
 
-                const dataUrl =
-                    canvas.toDataURL(
-                        'image/jpeg',
-                        JPEG_QUALITY
-                    );
+            } else {
 
-
-                const base64 =
-                    dataUrl.split(',')[1];
-
-
-                resolve({
-
-                    base64: base64,
-
-                    mimeType: 'image/jpeg',
-
-                    filename: file.name
-
-                });
-
-            };
-
-
-            img.onerror = function() {
-
-                reject(
-                    new Error(
-                        'Unable to read image: ' +
-                        file.name
-                    )
+              width =
+                Math.round(
+                  width * MAX_IMAGE_SIZE / height
                 );
 
-            };
+              height = MAX_IMAGE_SIZE;
+            }
+          }
 
+          const canvas = document.createElement("canvas");
 
-            img.src =
-                event.target.result;
+          canvas.width = width;
+          canvas.height = height;
 
-        };
+          const ctx = canvas.getContext("2d");
 
+          ctx.drawImage(
+            img,
+            0,
+            0,
+            width,
+            height
+          );
 
-        reader.onerror = function() {
-
-            reject(
-                new Error(
-                    'Unable to load file: ' +
-                    file.name
-                )
+          const dataUrl =
+            canvas.toDataURL(
+              "image/jpeg",
+              JPEG_QUALITY
             );
 
+          resolve({
+            mimeType: "image/jpeg",
+            base64: dataUrl.split(",")[1],
+            originalName: file.name
+          });
+
         };
 
+        img.onerror = reject;
 
-        reader.readAsDataURL(file);
+        img.src = reader.result;
+
+      };
+
+      reader.onerror = reject;
+
+      reader.readAsDataURL(file);
 
     });
 
-}
+  }
 
 
-/* =========================================================
-   SEND BATCH TO APPS SCRIPT
-   ========================================================= */
+  // ============================================================
+  // DELAY
+  // ============================================================
 
-async function sendBatch(batch) {
+  function sleep(ms) {
 
-    let lastError;
+    return new Promise(resolve => {
+      setTimeout(resolve, ms);
+    });
+
+  }
 
 
-    for (
-        let attempt = 1;
-        attempt <= MAX_RETRIES;
-        attempt++
-    ) {
+  // ============================================================
+  // SEND BATCH
+  // ============================================================
+
+  async function sendBatch(batch, batchNumber, totalBatches) {
+
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+
+      try {
+
+        statusEl.textContent =
+          "Sending batch " +
+          batchNumber +
+          " of " +
+          totalBatches +
+          "...\n" +
+          "Attempt " +
+          attempt +
+          " of " +
+          MAX_RETRIES;
+
+        const response = await fetch(
+          APPS_SCRIPT_URL,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8"
+            },
+
+            body: JSON.stringify({
+              action: "extract",
+              images: batch
+            })
+          }
+        );
+
+
+        const text = await response.text();
+
+        let data;
 
         try {
 
-            const response =
-                await fetch(
-                    APPS_SCRIPT_URL,
-                    {
+          data = JSON.parse(text);
 
-                        method: 'POST',
+        } catch (parseError) {
 
-                        headers: {
-                            'Content-Type':
-                                'text/plain;charset=utf-8'
-                        },
-
-                        body: JSON.stringify({
-
-                            action: 'extract',
-
-                            receipts: batch.map(
-                                item => ({
-                                    base64:
-                                        item.base64,
-
-                                    mimeType:
-                                        item.mimeType
-                                })
-                            )
-
-                        })
-
-                    }
-                );
-
-
-            const text =
-                await response.text();
-
-
-            let data;
-
-
-            try {
-
-                data =
-                    JSON.parse(text);
-
-            } catch (error) {
-
-                throw new Error(
-                    'INVALID SERVER RESPONSE: ' +
-                    text.substring(0, 300)
-                );
-
-            }
-
-
-            if (!data.success) {
-
-                throw new Error(
-                    data.error ||
-                    'EXTRACTION FAILED.'
-                );
-
-            }
-
-
-            if (
-                !Array.isArray(data.results)
-            ) {
-
-                throw new Error(
-                    'SERVER RETURNED INVALID RESULTS.'
-                );
-
-            }
-
-
-            return data.results;
-
-
-        } catch (error) {
-
-            lastError = error;
-
-
-            if (
-                attempt < MAX_RETRIES
-            ) {
-
-                showStatus(
-                    'Batch failed. Retrying ' +
-                    attempt +
-                    '/' +
-                    MAX_RETRIES +
-                    '...'
-                );
-
-
-                await sleep(
-                    2000 * attempt
-                );
-
-            }
+          throw new Error(
+            "Invalid response from Apps Script: " +
+            text.substring(0, 500)
+          );
 
         }
 
-    }
 
+        if (!response.ok) {
+
+          throw new Error(
+            data.error ||
+            "Apps Script HTTP " + response.status
+          );
+
+        }
+
+
+        if (!data || !Array.isArray(data)) {
+
+          if (data && data.error) {
+            throw new Error(data.error);
+          }
+
+          throw new Error(
+            "Unexpected response from Apps Script."
+          );
+
+        }
+
+
+        return data;
+
+      } catch (error) {
+
+        lastError = error;
+
+        console.error(
+          "Batch attempt failed:",
+          error
+        );
+
+        if (attempt < MAX_RETRIES) {
+
+          await sleep(3000 * attempt);
+
+        }
+
+      }
+
+    }
 
     throw lastError;
 
-}
+  }
 
 
-/* =========================================================
-   EXTRACT RECEIPTS
-   ========================================================= */
+  // ============================================================
+  // START EXTRACTION
+  // ============================================================
 
-extractBtn.addEventListener(
-    'click',
-    async function() {
+  async function startExtraction() {
 
-        const files =
-            Array.from(
-                fileInput.files
-            );
+    if (selectedFiles.length === 0) {
 
+      alert("Please select receipt images first.");
 
-        if (files.length === 0) {
-
-            showStatus(
-                'Please select at least one receipt or invoice.',
-                'error'
-            );
-
-            return;
-
-        }
-
-
-        extractBtn.disabled = true;
-
-        saveBtn.disabled = true;
-
-        copyBtn.disabled = true;
-
-        downloadBtn.disabled = true;
-
-
-        extractedResults = [];
-
-        resultsContainer.innerHTML = '';
-
-
-        try {
-
-            showStatus(
-                'Preparing ' +
-                files.length +
-                ' receipt(s)...',
-                'processing'
-            );
-
-
-            const prepared = [];
-
-
-            for (
-                let i = 0;
-                i < files.length;
-                i++
-            ) {
-
-                showStatus(
-                    'Preparing image ' +
-                    (i + 1) +
-                    ' of ' +
-                    files.length +
-                    '...'
-                );
-
-
-                const compressed =
-                    await compressImage(
-                        files[i]
-                    );
-
-
-                prepared.push(
-                    compressed
-                );
-
-            }
-
-
-            const totalBatches =
-                Math.ceil(
-                    prepared.length /
-                    BATCH_SIZE
-                );
-
-
-            for (
-                let i = 0;
-                i < prepared.length;
-                i += BATCH_SIZE
-            ) {
-
-                const batch =
-                    prepared.slice(
-                        i,
-                        i + BATCH_SIZE
-                    );
-
-
-                const batchNumber =
-                    Math.floor(
-                        i / BATCH_SIZE
-                    ) + 1;
-
-
-                showStatus(
-                    'Processing batch ' +
-                    batchNumber +
-                    ' of ' +
-                    totalBatches +
-                    ' (' +
-                    batch.length +
-                    ' receipts)...',
-                    'processing'
-                );
-
-
-                const results =
-                    await sendBatch(
-                        batch
-                    );
-
-
-                results.forEach(
-                    (result, index) => {
-
-                        extractedResults.push({
-
-                            success: true,
-
-                            filename:
-                                batch[index]
-                                    .filename,
-
-                            company:
-                                result.company || '',
-
-                            item:
-                                result.item || '',
-
-                            date:
-                                result.date || '',
-
-                            price:
-                                result.price || '',
-
-                            transactionType:
-                                result.transactionType || '',
-
-                            autocount:
-                                result.autocount || ''
-
-                        });
-
-                    }
-                );
-
-
-                if (
-                    i + BATCH_SIZE <
-                    prepared.length
-                ) {
-
-                    await sleep(
-                        DELAY_BETWEEN_BATCHES
-                    );
-
-                }
-
-            }
-
-
-            renderResults();
-
-
-            saveBtn.disabled =
-                extractedResults.length === 0;
-
-            copyBtn.disabled =
-                extractedResults.length === 0;
-
-            downloadBtn.disabled =
-                extractedResults.length === 0;
-
-
-            showStatus(
-                'Completed. ' +
-                extractedResults.length +
-                ' receipt(s) extracted successfully.',
-                'success'
-            );
-
-
-        } catch (error) {
-
-            console.error(error);
-
-
-            showStatus(
-                'ERROR: ' +
-                error.message,
-                'error'
-            );
-
-        } finally {
-
-            extractBtn.disabled = false;
-
-        }
-
+      return;
     }
-);
 
 
-/* =========================================================
-   RENDER RESULTS
-   ========================================================= */
+    if (
+      !APPS_SCRIPT_URL ||
+      APPS_SCRIPT_URL.includes("PASTE_YOUR")
+    ) {
 
-function renderResults() {
+      alert(
+        "Please put your Apps Script Web App URL into APPS_SCRIPT_URL first."
+      );
 
-    resultsContainer.innerHTML = '';
+      return;
+    }
 
 
-    extractedResults.forEach(
-        (record, index) => {
+    extractBtn.disabled = true;
+    copyBtn.disabled = true;
+    downloadBtn.disabled = true;
+    csvBtn.disabled = true;
+    saveBtn.disabled = true;
 
-            const card =
-                document.createElement('div');
+    extractedResults = [];
 
+    renderResults();
 
-            card.className = 'card';
 
+    try {
 
-            const autocount =
-                record.autocount ||
-                (
-                    'BEING ' +
-                    (
-                        record.transactionType ||
-                        'TRANSACTION'
-                    ) +
-                    ' OF ' +
-                    (
-                        record.item ||
-                        ''
-                    ) +
-                    ' - ' +
-                    (
-                        record.company ||
-                        ''
-                    ) +
-                    ' - ' +
-                    (
-                        record.date ||
-                        ''
-                    )
-                );
+      statusEl.textContent =
+        "Compressing images...";
 
+      const compressedImages = [];
 
-            card.innerHTML = `
 
-                <div class="card-header">
+      for (
+        let i = 0;
+        i < selectedFiles.length;
+        i++
+      ) {
 
-                    <span>
-                        Receipt ${index + 1}
-                    </span>
+        progressEl.textContent =
+          "Preparing image " +
+          (i + 1) +
+          " of " +
+          selectedFiles.length;
 
-                    <span>
-                        ${escapeHtml(record.filename)}
-                    </span>
+        const compressed =
+          await compressImage(selectedFiles[i]);
 
-                </div>
+        compressedImages.push(compressed);
 
+      }
 
-                <div class="field">
 
-                    <div class="label">
-                        Company
-                    </div>
+      const batches = [];
 
-                    <div class="value">
-                        ${escapeHtml(record.company)}
-                    </div>
+      for (
+        let i = 0;
+        i < compressedImages.length;
+        i += BATCH_SIZE
+      ) {
 
-                </div>
-
-
-                <div class="field">
-
-                    <div class="label">
-                        Item
-                    </div>
-
-                    <div class="value">
-                        ${escapeHtml(record.item)}
-                    </div>
-
-                </div>
-
-
-                <div class="field">
-
-                    <div class="label">
-                        Transaction Type
-                    </div>
-
-                    <div class="value">
-                        ${escapeHtml(
-                            record.transactionType
-                        )}
-                    </div>
-
-                </div>
-
-
-                <div class="field">
-
-                    <div class="label">
-                        Date
-                    </div>
-
-                    <div class="value">
-                        ${escapeHtml(record.date)}
-                    </div>
-
-                </div>
-
-
-                <div class="field">
-
-                    <div class="label">
-                        Price
-                    </div>
-
-                    <div class="value">
-                        RM ${escapeHtml(record.price)}
-                    </div>
-
-                </div>
-
-
-                <div class="autocount">
-
-                    <div class="autocount-text">
-
-                        ${escapeHtml(autocount)}
-
-                    </div>
-
-
-                    <div class="autocount-price">
-
-                        RM ${escapeHtml(record.price)}
-
-                    </div>
-
-                </div>
-
-            `;
-
-
-            resultsContainer.appendChild(card);
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   ESCAPE HTML
-   ========================================================= */
-
-function escapeHtml(value) {
-
-    return String(value || '')
-
-        .replace(
-            /&/g,
-            '&amp;'
-        )
-
-        .replace(
-            /</g,
-            '&lt;'
-        )
-
-        .replace(
-            />/g,
-            '&gt;'
-        )
-
-        .replace(
-            /"/g,
-            '&quot;'
-        )
-
-        .replace(
-            /'/g,
-            '&#039;'
+        batches.push(
+          compressedImages.slice(
+            i,
+            i + BATCH_SIZE
+          )
         );
 
-}
+      }
 
 
-/* =========================================================
-   SAVE TO GOOGLE SHEETS
-   ========================================================= */
-
-saveBtn.addEventListener(
-    'click',
-    async function() {
-
-        if (
-            extractedResults.length === 0
-        ) {
-
-            return;
-
-        }
+      let processed = 0;
+      let successful = 0;
+      let failed = 0;
 
 
-        saveBtn.disabled = true;
+      for (
+        let i = 0;
+        i < batches.length;
+        i++
+      ) {
+
+        const batch = batches[i];
+
+        progressEl.textContent =
+          "Processing batch " +
+          (i + 1) +
+          " of " +
+          batches.length;
 
 
         try {
 
-            showStatus(
-                'Saving to Google Sheets...',
-                'processing'
+          const results =
+            await sendBatch(
+              batch,
+              i + 1,
+              batches.length
             );
 
 
-            const response =
-                await fetch(
-                    APPS_SCRIPT_URL,
-                    {
+          results.forEach(result => {
 
-                        method: 'POST',
+            if (result.success === false) {
 
-                        headers: {
-                            'Content-Type':
-                                'text/plain;charset=utf-8'
-                        },
+              failed++;
 
-                        body: JSON.stringify({
+            } else {
 
-                            action: 'save',
-
-                            records:
-                                extractedResults
-
-                        })
-
-                    }
-                );
-
-
-            const text =
-                await response.text();
-
-
-            const data =
-                JSON.parse(text);
-
-
-            if (!data.success) {
-
-                throw new Error(
-                    data.error ||
-                    'SAVE FAILED.'
-                );
+              successful++;
 
             }
 
+            extractedResults.push(result);
 
-            showStatus(
-                'Saved ' +
-                data.saved +
-                ' record(s) to Google Sheets.',
-                'success'
-            );
+          });
+
+
+          processed += batch.length;
 
 
         } catch (error) {
 
-            console.error(error);
+          console.error(
+            "Batch completely failed:",
+            error
+          );
 
 
-            showStatus(
-                'SAVE ERROR: ' +
-                error.message,
-                'error'
-            );
+          /*
+            Preserve one failure result per receipt.
+          */
 
+          batch.forEach((image, index) => {
 
-        } finally {
+            extractedResults.push({
 
-            saveBtn.disabled = false;
+              success: false,
+
+              company: "UNKNOWN",
+
+              item: "UNKNOWN",
+
+              date: "UNKNOWN",
+
+              price: "UNKNOWN",
+
+              transactionType: "OTHER",
+
+              autocount:
+                "ERROR - " +
+                image.originalName,
+
+              error:
+                error.message ||
+                "Extraction failed.",
+
+              fileName:
+                image.originalName
+
+            });
+
+            failed++;
+
+          });
+
+          processed += batch.length;
 
         }
+
+
+        processedCountEl.textContent = processed;
+        successCountEl.textContent = successful;
+        failedCountEl.textContent = failed;
+
+
+        renderResults();
+
+
+        /*
+          Delay between batches.
+
+          Do not delay after the final batch.
+        */
+
+        if (i < batches.length - 1) {
+
+          statusEl.textContent =
+            "Batch " +
+            (i + 1) +
+            " completed.\n" +
+            "Waiting before next batch...";
+
+          await sleep(
+            DELAY_BETWEEN_BATCHES
+          );
+
+        }
+
+      }
+
+
+      statusEl.textContent =
+        "Extraction completed.\n" +
+        "Processed: " + processed +
+        "\nSuccess: " + successful +
+        "\nFailed: " + failed;
+
+
+      progressEl.textContent =
+        "Finished.";
+
+      updateButtons();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      statusEl.textContent =
+        "ERROR: " +
+        (error.message || error);
+
+      progressEl.textContent =
+        "Extraction stopped.";
+
+    } finally {
+
+      extractBtn.disabled = false;
 
     }
-);
+
+  }
 
 
-/* =========================================================
-   COPY AUTOCOUNT LINES
-   ========================================================= */
+  // ============================================================
+  // RENDER RESULTS
+  // ============================================================
 
-copyBtn.addEventListener(
-    'click',
-    async function() {
+  function renderResults() {
 
-        if (
-            extractedResults.length === 0
-        ) {
+    resultsEl.innerHTML = "";
 
-            return;
+    extractedResults.forEach((result, index) => {
 
-        }
+      const card =
+        document.createElement("div");
 
-
-        const text =
-            extractedResults
-
-                .map(record => {
-
-                    const line =
-                        record.autocount ||
-                        (
-                            'BEING ' +
-                            (
-                                record.transactionType ||
-                                'TRANSACTION'
-                            ) +
-                            ' OF ' +
-                            (
-                                record.item ||
-                                ''
-                            ) +
-                            ' - ' +
-                            (
-                                record.company ||
-                                ''
-                            ) +
-                            ' - ' +
-                            (
-                                record.date ||
-                                ''
-                            )
-                        );
+      card.className =
+        "result-card" +
+        (
+          result.success === false
+            ? " failed"
+            : ""
+        );
 
 
-                    return (
-                        line +
-                        '    RM ' +
-                        record.price
-                    );
+      const number =
+        document.createElement("div");
 
-                })
+      number.className =
+        "result-number";
 
-                .join('\n');
-
-
-        try {
-
-            await navigator.clipboard.writeText(
-                text
-            );
+      number.textContent =
+        "Receipt " + (index + 1);
 
 
-            showStatus(
-                'AutoCount lines copied.',
-                'success'
-            );
-
-        } catch (error) {
-
-            showStatus(
-                'Unable to copy automatically.',
-                'error'
-            );
-
-        }
-
-    }
-);
+      card.appendChild(number);
 
 
-/* =========================================================
-   DOWNLOAD CSV
-   ========================================================= */
+      addField(
+        card,
+        "Company",
+        result.company
+      );
 
-downloadBtn.addEventListener(
-    'click',
-    function() {
+      addField(
+        card,
+        "Item",
+        result.item
+      );
 
-        if (
-            extractedResults.length === 0
-        ) {
+      addField(
+        card,
+        "Date",
+        result.date
+      );
 
-            return;
+      addField(
+        card,
+        "Price",
+        result.price
+      );
 
-        }
-
-
-        const headers = [
-
-            'DATE',
-
-            'COMPANY',
-
-            'ITEM',
-
-            'PRICE',
-
-            'AUTOCOUNT LINE',
-
-            'RECEIPT FILENAME'
-
-        ];
+      addField(
+        card,
+        "Transaction Type",
+        result.transactionType
+      );
 
 
-        const rows =
-            extractedResults.map(
-                record => [
+      const autoLabel =
+        document.createElement("div");
 
-                    record.date,
+      autoLabel.className = "field";
 
-                    record.company,
-
-                    record.item,
-
-                    record.price,
-
-                    record.autocount,
-
-                    record.filename
-
-                ]
-            );
+      autoLabel.innerHTML =
+        "<strong>AutoCount:</strong>";
 
 
-        const csv = [
+      card.appendChild(autoLabel);
 
-            headers,
 
-            ...rows
+      const auto =
+        document.createElement("div");
 
-        ]
+      auto.className =
+        "autocount";
 
-        .map(
-            row =>
-                row
-                    .map(
-                        value =>
-                            '"' +
-                            String(
-                                value || ''
-                            )
-                            .replace(
-                                /"/g,
-                                '""'
-                            ) +
-                            '"'
-                    )
-                    .join(',')
+      auto.textContent =
+        result.autocount || "UNKNOWN";
+
+
+      card.appendChild(auto);
+
+
+      if (result.modelUsed) {
+
+        addField(
+          card,
+          "Model Used",
+          result.modelUsed
+        );
+
+      }
+
+
+      if (result.error) {
+
+        addField(
+          card,
+          "Error",
+          result.error
+        );
+
+      }
+
+
+      resultsEl.appendChild(card);
+
+    });
+
+  }
+
+
+  function addField(
+    parent,
+    label,
+    value
+  ) {
+
+    const div =
+      document.createElement("div");
+
+    div.className = "field";
+
+    const strong =
+      document.createElement("strong");
+
+    strong.textContent =
+      label + ":";
+
+    div.appendChild(strong);
+
+    div.appendChild(
+      document.createTextNode(
+        " " +
+        (
+          value === undefined ||
+          value === null ||
+          value === ""
+            ? "UNKNOWN"
+            : value
         )
+      )
+    );
 
-        .join('\n');
+    parent.appendChild(div);
 
-
-        const blob =
-            new Blob(
-                [csv],
-                {
-                    type:
-                        'text/csv;charset=utf-8;'
-                }
-            );
+  }
 
 
-        const url =
-            URL.createObjectURL(blob);
+  // ============================================================
+  // COPY AUTOCOUNT
+  // ============================================================
+
+  async function copyAutoCount() {
+
+    if (extractedResults.length === 0) {
+      return;
+    }
 
 
-        const a =
-            document.createElement('a');
+    const lines =
+      extractedResults
+        .filter(r => r.success !== false)
+        .map(r => r.autocount || "UNKNOWN");
 
 
-        a.href = url;
+    if (lines.length === 0) {
 
-        a.download =
-            'receipt_extraction.csv';
+      alert("No successful results to copy.");
 
-
-        document.body.appendChild(a);
-
-        a.click();
-
-        document.body.removeChild(a);
-
-
-        URL.revokeObjectURL(url);
+      return;
 
     }
-);
 
 
-/* =========================================================
-   CLEAR
-   ========================================================= */
+    const text =
+      lines.join("\n");
 
-clearBtn.addEventListener(
-    'click',
-    function() {
 
-        fileInput.value = '';
+    try {
 
-        extractedResults = [];
+      await navigator.clipboard.writeText(text);
 
-        resultsContainer.innerHTML = '';
+      statusEl.textContent =
+        "AutoCount text copied.";
 
-        status.classList.add('hidden');
+    } catch (error) {
 
-        saveBtn.disabled = true;
+      /*
+        Fallback for browsers that block
+        navigator.clipboard.
+      */
 
-        copyBtn.disabled = true;
+      const textarea =
+        document.createElement("textarea");
 
-        downloadBtn.disabled = true;
+      textarea.value = text;
+
+      document.body.appendChild(textarea);
+
+      textarea.select();
+
+      document.execCommand("copy");
+
+      textarea.remove();
+
+      statusEl.textContent =
+        "AutoCount text copied.";
 
     }
-);
+
+  }
+
+
+  // ============================================================
+  // DOWNLOAD TXT
+  // ============================================================
+
+  function downloadTXT() {
+
+    const lines =
+      extractedResults
+        .filter(r => r.success !== false)
+        .map(r => r.autocount || "UNKNOWN");
+
+
+    if (lines.length === 0) {
+
+      alert("No successful results.");
+
+      return;
+
+    }
+
+
+    const blob =
+      new Blob(
+        [lines.join("\n")],
+        {
+          type: "text/plain;charset=utf-8"
+        }
+      );
+
+
+    const url =
+      URL.createObjectURL(blob);
+
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      "autocount_output.txt";
+
+    a.click();
+
+
+    URL.revokeObjectURL(url);
+
+  }
+
+
+  // ============================================================
+  // CSV DOWNLOAD
+  // ============================================================
+
+  function csvEscape(value) {
+
+    if (
+      value === null ||
+      value === undefined
+    ) {
+      return "";
+    }
+
+    value =
+      String(value);
+
+    return '"' +
+      value.replace(
+        /"/g,
+        '""'
+      ) +
+      '"';
+
+  }
+
+
+  function downloadCSV() {
+
+    if (extractedResults.length === 0) {
+
+      alert("No results.");
+
+      return;
+
+    }
+
+
+    const header = [
+      "Company",
+      "Item",
+      "Date",
+      "Price",
+      "Transaction Type",
+      "AutoCount",
+      "Model Used",
+      "Status"
+    ];
+
+
+    const rows =
+      extractedResults.map(r => [
+
+        r.company,
+
+        r.item,
+
+        r.date,
+
+        r.price,
+
+        r.transactionType,
+
+        r.autocount,
+
+        r.modelUsed || "",
+
+        r.success === false
+          ? "FAILED"
+          : "SUCCESS"
+
+      ]);
+
+
+    const csv = [
+
+      header.map(csvEscape).join(","),
+
+      ...rows.map(
+        row =>
+          row.map(csvEscape).join(",")
+      )
+
+    ].join("\n");
+
+
+    const blob =
+      new Blob(
+        [csv],
+        {
+          type: "text/csv;charset=utf-8"
+        }
+      );
+
+
+    const url =
+      URL.createObjectURL(blob);
+
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      "receipt_extraction.csv";
+
+    a.click();
+
+
+    URL.revokeObjectURL(url);
+
+  }
+
+
+  // ============================================================
+  // SAVE TO GOOGLE SHEET
+  // ============================================================
+
+  async function saveToSheet() {
+
+    if (extractedResults.length === 0) {
+
+      alert("No results to save.");
+
+      return;
+
+    }
+
+
+    const successfulResults =
+      extractedResults.filter(
+        r => r.success !== false
+      );
+
+
+    if (successfulResults.length === 0) {
+
+      alert(
+        "There are no successful results to save."
+      );
+
+      return;
+
+    }
+
+
+    saveBtn.disabled = true;
+
+    statusEl.textContent =
+      "Saving to Google Sheet...";
+
+
+    try {
+
+      const response =
+        await fetch(
+          APPS_SCRIPT_URL,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "text/plain;charset=utf-8"
+            },
+
+            body: JSON.stringify({
+
+              action: "save",
+
+              results:
+                successfulResults
+
+            })
+
+          }
+        );
+
+
+      const text =
+        await response.text();
+
+
+      let data;
+
+      try {
+
+        data =
+          JSON.parse(text);
+
+      } catch {
+
+        throw new Error(
+          "Invalid response from Apps Script."
+        );
+
+      }
+
+
+      if (!response.ok || data.success === false) {
+
+        throw new Error(
+          data.error ||
+          "Failed to save."
+        );
+
+      }
+
+
+      statusEl.textContent =
+        "Saved " +
+        successfulResults.length +
+        " receipt(s) to Google Sheet.";
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      statusEl.textContent =
+        "SAVE ERROR: " +
+        error.message;
+
+    } finally {
+
+      saveBtn.disabled = false;
+
+    }
+
+  }
+
+
+  // ============================================================
+  // CLEAR
+  // ============================================================
+
+  function clearAll() {
+
+    selectedFiles = [];
+
+    extractedResults = [];
+
+    fileInput.value = "";
+
+    fileInfo.textContent =
+      "No images selected";
+
+    statusEl.textContent =
+      "Ready.";
+
+    progressEl.textContent =
+      "";
+
+    renderResults();
+
+    updateFileInfo();
+
+    updateButtons();
+
+  }
+
+
+  // ============================================================
+  // BUTTON STATE
+  // ============================================================
+
+  function updateButtons() {
+
+    extractBtn.disabled =
+      selectedFiles.length === 0;
+
+    const hasResults =
+      extractedResults.length > 0;
+
+    copyBtn.disabled =
+      !hasResults;
+
+    downloadBtn.disabled =
+      !hasResults;
+
+    csvBtn.disabled =
+      !hasResults;
+
+    saveBtn.disabled =
+      !hasResults;
+
+  }
+
+
+  // ============================================================
+  // INITIAL STATE
+  // ============================================================
+
+  updateFileInfo();
+  updateButtons();
 
 </script>
 
-
 </body>
-
 </html>
