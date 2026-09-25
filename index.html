@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
@@ -231,6 +234,7 @@
 
 </head>
 
+
 <body>
 
 <div class="container">
@@ -455,49 +459,32 @@ const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbxGYlLkkvFXLxtLTjJMn7DVpPLQR4QASmR7W9ZKlr150muzI5ywiNictWe15jrYohC9ww/exec";
 
 
-// ------------------------------------------------------------
-// IMPORTANT
-//
-// 1 photo  = 1 Gemini request
-//
-// Multiple photos are split into groups of 5.
-//
-// This is deliberately smaller than the old batch size of 10.
-// ------------------------------------------------------------
+// ============================================================
+// BATCH SETTINGS
+// ============================================================
 
 const BATCH_SIZE = 5;
 
 
-// ------------------------------------------------------------
+// ============================================================
 // IMAGE SETTINGS
-// ------------------------------------------------------------
+// ============================================================
 
 const MAX_IMAGE_SIZE = 1200;
 
 const JPEG_QUALITY = 0.70;
 
 
-// ------------------------------------------------------------
+// ============================================================
 // FRONTEND RETRY
-//
-// Apps Script already performs model fallback.
-//
-// Therefore we don't want the browser repeatedly
-// resending the same request.
-//
-// Only retry the entire Apps Script request once.
-// ------------------------------------------------------------
+// ============================================================
 
 const MAX_RETRIES = 1;
 
 
-// ------------------------------------------------------------
+// ============================================================
 // DELAY BETWEEN MULTIPLE BATCHES
-//
-// Only applies when there are multiple batches.
-//
-// There is NO artificial delay for one photo.
-// ------------------------------------------------------------
+// ============================================================
 
 const DELAY_BETWEEN_BATCHES = 1500;
 
@@ -687,10 +674,6 @@ function compressImage(file) {
               let height =
                 img.height;
 
-
-              // ----------------------------------------------
-              // Resize only if necessary
-              // ----------------------------------------------
 
               if (
                 width > MAX_IMAGE_SIZE ||
@@ -899,9 +882,18 @@ async function sendBatch(
 
       } catch (error) {
 
+        console.error(
+          "RAW APPS SCRIPT RESPONSE:",
+          text
+        );
+
         throw new Error(
-          "Invalid response from Apps Script: " +
-          text.substring(0, 500)
+          "Invalid response from Apps Script.\n\n" +
+          "HTTP Status: " +
+          response.status +
+          "\n\n" +
+          "Response:\n" +
+          text.substring(0, 1000)
         );
 
       }
@@ -957,12 +949,6 @@ async function sendBatch(
         attempt <= MAX_RETRIES
       ) {
 
-        /*
-          Only one complete retry.
-
-          Very short delay.
-        */
-
         await sleep(1000);
 
       }
@@ -973,6 +959,99 @@ async function sendBatch(
 
 
   throw lastError;
+
+}
+
+
+// ============================================================
+// AUTOMATIC SAVE TO GOOGLE SHEET
+// ============================================================
+
+async function saveResultsToSheet() {
+
+  const successfulResults =
+    extractedResults.filter(
+      function(result) {
+
+        return result.success !== false;
+
+      }
+    );
+
+
+  if (
+    successfulResults.length === 0
+  ) {
+
+    return;
+
+  }
+
+
+  const response =
+    await fetch(
+      APPS_SCRIPT_URL,
+      {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
+        body:
+          JSON.stringify({
+
+            action:
+              "save",
+
+            results:
+              successfulResults
+
+          })
+
+      }
+    );
+
+
+  const text =
+    await response.text();
+
+
+  let data;
+
+
+  try {
+
+    data =
+      JSON.parse(text);
+
+  } catch (error) {
+
+    console.error(
+      "RAW SAVE RESPONSE:",
+      text
+    );
+
+    throw new Error(
+      "Invalid response while saving to Google Sheet."
+    );
+
+  }
+
+
+  if (
+    !response.ok ||
+    data.success === false
+  ) {
+
+    throw new Error(
+      data.error ||
+      "Google Sheet save failed."
+    );
+
+  }
 
 }
 
@@ -1164,11 +1243,6 @@ async function startExtraction() {
         );
 
 
-        /*
-          Create one failure entry
-          for every receipt in the batch.
-        */
-
         batch.forEach(
           function(image) {
 
@@ -1232,7 +1306,7 @@ async function startExtraction() {
 
 
       // ------------------------------------------------------
-      // Delay only between MULTIPLE batches
+      // Delay only between multiple batches
       // ------------------------------------------------------
 
       if (
@@ -1248,14 +1322,75 @@ async function startExtraction() {
     }
 
 
-    statusEl.textContent =
-      "Extraction completed.\n" +
-      "Processed: " +
-      processed +
-      "\nSuccess: " +
-      successful +
-      "\nFailed: " +
-      failed;
+    // ========================================================
+    // AUTOMATIC GOOGLE SHEET SAVE
+    // ========================================================
+
+    if (
+      successful > 0
+    ) {
+
+      statusEl.textContent =
+        "Extraction completed.\n" +
+        "Processed: " +
+        processed +
+        "\nSuccess: " +
+        successful +
+        "\nFailed: " +
+        failed +
+        "\n\nSaving to Google Sheet automatically...";
+
+
+      try {
+
+        await saveResultsToSheet();
+
+
+        statusEl.textContent =
+          "Extraction completed.\n" +
+          "Processed: " +
+          processed +
+          "\nSuccess: " +
+          successful +
+          "\nFailed: " +
+          failed +
+          "\n\n✓ Automatically saved " +
+          successful +
+          " receipt(s) to Google Sheet.";
+
+
+      } catch (error) {
+
+        console.error(
+          "Automatic Google Sheet save failed:",
+          error
+        );
+
+
+        statusEl.textContent =
+          "Extraction completed.\n" +
+          "Processed: " +
+          processed +
+          "\nSuccess: " +
+          successful +
+          "\nFailed: " +
+          failed +
+          "\n\n⚠ Extraction succeeded, but automatic Google Sheet saving failed:\n" +
+          error.message;
+
+      }
+
+    } else {
+
+      statusEl.textContent =
+        "Extraction completed.\n" +
+        "Processed: " +
+        processed +
+        "\nSuccess: 0\n" +
+        "Failed: " +
+        failed;
+
+    }
 
 
     progressEl.textContent =
@@ -1811,7 +1946,7 @@ function downloadCSV() {
 
 
 // ============================================================
-// SAVE TO GOOGLE SHEET
+// MANUAL SAVE TO GOOGLE SHEET
 // ============================================================
 
 async function saveToSheet() {
@@ -1889,6 +2024,11 @@ async function saveToSheet() {
         JSON.parse(text);
 
     } catch (error) {
+
+      console.error(
+        "RAW SAVE RESPONSE:",
+        text
+      );
 
       throw new Error(
         "Invalid response from Apps Script."
@@ -2012,7 +2152,9 @@ updateFileInfo();
 
 updateButtons();
 
+
 </script>
 
 </body>
+
 </html>
