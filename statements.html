@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice Statement Extractor | AutoCount Tools</title>
+<style>
+  :root { color-scheme: light; font-family: Inter, Arial, sans-serif; color: #20303b; background: #f4f7f9; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 26px 16px 60px; }
+  main { max-width: 1080px; margin: auto; }
+  a { color: #087568; }
+  .nav { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 22px; flex-wrap: wrap; }
+  .brand { font-weight: 800; font-size: 17px; color: #20303b; text-decoration: none; }
+  .navlink { font-size: 14px; font-weight: 700; }
+  .hero { padding: 30px; border-radius: 18px; background: linear-gradient(115deg, #064e45, #117e77); color: #fff; margin-bottom: 18px; }
+  .hero h1 { font-size: clamp(25px, 4vw, 37px); letter-spacing: -.03em; margin: 0 0 12px; }
+  .hero p { margin: 0; line-height: 1.6; color: #e1f6f2; max-width: 720px; }
+  .card { background: #fff; border: 1px solid #e1e8ed; border-radius: 16px; padding: 23px; margin-bottom: 18px; box-shadow: 0 3px 13px #192b3a09; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .card h2 { font-size: 20px; margin: 0 0 8px; }
+  .muted { color: #627382; font-size: 14px; line-height: 1.6; }
+  .drop { display: block; border: 2px dashed #9fcac3; background: #f6fcfa; border-radius: 12px; text-align: center; padding: 34px 20px; margin: 16px 0; cursor: pointer; transition: .15s; }
+  .drop.dragover, .drop:hover { background: #eaf8f4; border-color: #087568; }
+  .drop strong { display: block; margin-bottom: 7px; font-size: 17px; }
+  .drop span { color: #627382; font-size: 14px; }
+  input[type=file] { display: none; }
+  .files { font-size: 14px; white-space: pre-line; overflow-wrap: anywhere; color: #324755; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
+  button, .button-link { border: 0; border-radius: 9px; padding: 12px 17px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .primary { background: #0b7569; color: #fff; }
+  .secondary { background: #ebf2f5; color: #25414c; }
+  .remove { background: #fff1f1; color: #a63131; padding: 9px 12px; }
+  .status { margin-top: 16px; border-radius: 9px; background: #edf6f3; color: #174d44; padding: 13px 15px; line-height: 1.5; white-space: pre-wrap; font-size: 14px; }
+  .status.error { background: #fff1f1; color: #9a2727; }
+  .status.warn { background: #fff7e5; color: #77520c; }
+  .metrics { display: flex; gap: 10px; margin: 13px 0; flex-wrap: wrap; }
+  .metric { background: #f2f8f7; padding: 12px 17px; border-radius: 10px; min-width: 130px; }
+  .metric strong { display: block; font-size: 25px; color: #0b7569; font-variant-numeric: tabular-nums; }
+  .metric span { font-size: 12px; color: #667781; }
+  .table-wrap { overflow-x: auto; margin-top: 16px; }
+  table { width: 100%; border-collapse: collapse; min-width: 795px; font-size: 13px; }
+  th { text-align: left; color: #526674; font-size: 12px; background: #edf4f3; padding: 12px 9px; }
+  td { border-bottom: 1px solid #ecf0f2; padding: 9px; }
+  td input { width: 100%; min-width: 120px; font: inherit; padding: 10px 9px; border: 1px solid #ccd8db; border-radius: 7px; color: #1f303b; }
+  td input:focus { outline: 2px solid #8ccac1; }
+  td:first-child { min-width: 36px; }
+  td:nth-child(4) { max-width: 180px; overflow-wrap: anywhere; }
+  .hidden { display: none; }
+  .note { font-size: 13px; color: #687b87; margin-top: 13px; line-height: 1.6; }
+  .review { background: #fff8e8; border-left: 4px solid #e9ac37; border-radius: 8px; padding: 12px; margin-top: 14px; white-space: pre-line; overflow-wrap: anywhere; font-size: 13px; line-height: 1.6; }
+  @media (max-width: 600px) { .hero { padding: 24px 19px; } .card { padding: 18px 14px; } button { flex: 1; } }
+</style>
+</head>
+<body>
+<main>
+  <nav class="nav">
+    <a class="brand" href="index.html">Receipt → AutoCount</a>
+    <a class="navlink" href="index.html">← Return to receipt extraction</a>
+  </nav>
+
+  <header class="hero">
+    <h1>Invoice Statement Extractor</h1>
+    <p>Upload statement images and extract every invoice number, invoice date, and invoice amount. Review and correct the rows before saving to a separate <strong>Invoice Register</strong> tab. Your existing receipt records in Sheet1 are not changed.</p>
+  </header>
+
+  <section class="card">
+    <h2>1. Upload statements</h2>
+    <div class="muted">JPG, PNG or other browser-supported images. A single statement may contain many invoice rows. Payments, credit notes, and running balances are excluded.</div>
+    <label class="drop" id="dropZone" for="statementInput">
+      <strong>Choose statement images or drag them here</strong>
+      <span>Clear, high-resolution scans improve accuracy</span>
+    </label>
+    <input type="file" id="statementInput" accept="image/*" multiple>
+    <div class="files" id="fileList">No images selected.</div>
+    <div class="buttons">
+      <button class="primary" id="extractBtn" disabled>Extract invoices</button>
+      <button class="secondary" id="clearBtn">Clear</button>
+    </div>
+    <div class="status" id="status" role="status" aria-live="polite">Ready. Select a statement image to begin.</div>
+  </section>
+
+  <section class="card hidden" id="resultsPanel">
+    <div class="row">
+      <div><h2>2. Check the extracted invoices</h2><div class="muted">You can edit any field or remove a row before saving.</div></div>
+      <div class="metrics"><div class="metric"><strong id="count">0</strong><span>Invoice rows</span></div><div class="metric"><strong id="total">RM 0.00</strong><span>Total invoice amount</span></div></div>
+    </div>
+    <div id="reviewNotes" class="review hidden"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Invoice Date (DD/MM/YYYY)</th><th>Invoice No</th><th>Amount (RM)</th><th>Source</th><th>Remove</th></tr></thead>
+        <tbody id="invoiceRows"></tbody>
+      </table>
+    </div>
+    <div class="buttons">
+      <button class="secondary" id="addBtn">+ Add missing invoice</button>
+      <button class="secondary" id="csvBtn">Download CSV</button>
+      <button class="primary" id="saveBtn" disabled>Save to Invoice Register</button>
+    </div>
+    <div class="note">Review against your statement, especially large amounts and similarly numbered invoices. The Save button writes to the new <strong>Invoice Register</strong> sheet only. Re-imported identical invoice/date/amount rows are skipped.</div>
+  </section>
+</main>
+<script>
+"use strict";
+// Same deployed web app endpoint as the original receipt webpage.
+// After changing Apps Script, update its EXISTING deployment to a new version.
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxGYlLkkvFXLxtLTjJMn7DVpPLQR4QASmR7W9ZKlr150muzI5ywiNictWe15jrYohC9ww/exec";
+const MAX_IMAGE_SIDE = 2400;
+const JPEG_QUALITY = 0.88;
+const MAX_FILES = 30;
+const $ = id => document.getElementById(id);
+let selectedFiles = [];
+let invoiceRows = [];
+let reviewMessages = [];
+let working = false;
+
+function notify(message, tone) {
+  const el = $("status");
+  el.textContent = message;
+  el.className = "status" + (tone ? " " + tone : "");
+}
+function setWorking(value) {
+  working = value;
+  $("extractBtn").disabled = value || selectedFiles.length === 0;
+  $("saveBtn").disabled = value || invoiceRows.length === 0;
+  $("addBtn").disabled = value;
+  $("clearBtn").disabled = value;
+}
+function updateSelection(files) {
+  if (working) return;
+  const valid = Array.from(files).filter(file => file.type.startsWith("image/")).slice(0, MAX_FILES);
+  selectedFiles = valid;
+  invoiceRows = [];
+  reviewMessages = [];
+  $("resultsPanel").classList.add("hidden");
+  $("fileList").textContent = valid.length ? valid.map(file => file.name).join("\n") : "No images selected.";
+  $("extractBtn").disabled = valid.length === 0;
+  $("statementInput").value = "";
+  notify(valid.length ? valid.length + " image(s) selected. Click Extract invoices." : "Ready. Select a statement image to begin.");
+}
+$("statementInput").addEventListener("change", e => updateSelection(e.target.files));
+$("dropZone").addEventListener("dragover", e => { e.preventDefault(); $("dropZone").classList.add("dragover"); });
+$("dropZone").addEventListener("dragleave", () => $("dropZone").classList.remove("dragover"));
+$("dropZone").addEventListener("drop", e => {
+  e.preventDefault();
+  $("dropZone").classList.remove("dragover");
+  updateSelection(e.dataTransfer.files);
+});
+$("clearBtn").addEventListener("click", () => updateSelection([]));
+
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Cannot read " + file.name));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Cannot open image " + file.name));
+      img.onload = () => {
+        const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve({
+          originalName: file.name,
+          mimeType: "image/jpeg",
+          base64: canvas.toDataURL("image/jpeg", JPEG_QUALITY).split(",")[1]
+        });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+async function api(action, payload) {
+  let response;
+  try {
+    response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: {"Content-Type": "text/plain;charset=utf-8"},
+      body: JSON.stringify(Object.assign({action: action}, payload))
+    });
+  } catch (error) {
+    throw new Error("Could not contact Apps Script: " + error.message);
+  }
+  const body = await response.text();
+  let parsed;
+  try { parsed = JSON.parse(body); } catch (_) {
+    throw new Error("Apps Script did not return JSON. Check the deployment permissions and URL.");
+  }
+  if (!response.ok || !parsed || parsed.success === false) {
+    const detail = parsed && parsed.error ? parsed.error : "HTTP " + response.status;
+    throw new Error(detail + (String(detail).includes("Unknown action") ? " — Deploy the updated Apps Script code first." : ""));
+  }
+  return parsed;
+}
+
+function showRows() {
+  $("resultsPanel").classList.remove("hidden");
+  const tbody = $("invoiceRows");
+  tbody.replaceChildren();
+  invoiceRows.forEach((record, index) => {
+    const tr = document.createElement("tr");
+    const number = document.createElement("td");
+    number.textContent = String(index + 1);
+    tr.appendChild(number);
+    [["invoiceDate", "DD/MM/YYYY"], ["invoiceNo", "Invoice number"], ["amount", "0.00"]].forEach(([key, placeholder]) => {
+      const td = document.createElement("td");
+      const input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = placeholder;
+      input.value = record[key] === undefined || record[key] === null ? "" : String(record[key]);
+      input.setAttribute("aria-label", key + " for invoice row " + (index + 1));
+      input.addEventListener("input", () => { record[key] = input.value; updateTotals(); });
+      td.appendChild(input);
+      tr.appendChild(td);
+    });
+    const source = document.createElement("td");
+    source.textContent = record.fileName || "Manual";
+    tr.appendChild(source);
+    const actions = document.createElement("td");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "remove";
+    button.textContent = "Remove";
+    button.addEventListener("click", () => { invoiceRows.splice(index, 1); showRows(); });
+    actions.appendChild(button);
+    tr.appendChild(actions);
+    tbody.appendChild(tr);
+  });
+  $("reviewNotes").classList.toggle("hidden", reviewMessages.length === 0);
+  $("reviewNotes").textContent = reviewMessages.join("\n");
+  updateTotals();
+}
+function updateTotals() {
+  $("count").textContent = String(invoiceRows.length);
+  const sum = invoiceRows.reduce((acc, record) => {
+    const amount = Number(String(record.amount).replace(/^(RM|MYR)\s*/i, "").replace(/,/g, ""));
+    return acc + (Number.isFinite(amount) && amount > 0 ? amount : 0);
+  }, 0);
+  $("total").textContent = "RM " + sum.toLocaleString("en-MY", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  $("saveBtn").disabled = working || invoiceRows.length === 0;
+  $("csvBtn").disabled = invoiceRows.length === 0;
+}
+function validateRows() {
+  for (let i = 0; i < invoiceRows.length; i++) {
+    const row = invoiceRows[i];
+    const date = String(row.invoiceDate || "").trim();
+    const number = String(row.invoiceNo || "").trim();
+    const amount = String(row.amount === undefined ? "" : row.amount).trim();
+    const match = date.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    let validDate = false;
+    if (match) {
+      const d = new Date(Date.UTC(+match[3], +match[2] - 1, +match[1]));
+      validDate = d.getUTCFullYear() === +match[3] && d.getUTCMonth() + 1 === +match[2] && d.getUTCDate() === +match[1];
+    }
+    if (!validDate || !number || !/^[A-Za-z0-9][A-Za-z0-9 ._\/#-]{0,79}$/.test(number) ||
+        !/^\d+(?:\.\d{1,2})?$/.test(amount.replace(/,/g, "")) || !(Number(amount.replace(/,/g, "")) > 0)) {
+      throw new Error("Please correct invoice row " + (i + 1) + ". Date must be DD/MM/YYYY; invoice number and positive amount are required.");
+    }
+  }
+}
+
+$("extractBtn").addEventListener("click", async () => {
+  if (!selectedFiles.length || working) return;
+  setWorking(true);
+  invoiceRows = [];
+  reviewMessages = [];
+  $("resultsPanel").classList.add("hidden");
+  let succeeded = 0;
+  try {
+    for (let index = 0; index < selectedFiles.length; index++) {
+      const file = selectedFiles[index];
+      notify("Reading " + (index + 1) + " of " + selectedFiles.length + ": " + file.name + "\nKeep this tab open while extracting.");
+      try {
+        const image = await compressImage(file);
+        const result = await api("extractInvoices", {images: [image]});
+        if (!Array.isArray(result.results)) throw new Error("Backend response is missing results.");
+        result.results.forEach(r => invoiceRows.push({
+          invoiceDate: r.invoiceDate || "",
+          invoiceNo: r.invoiceNo || "",
+          amount: r.amount === undefined || r.amount === null ? "" : String(r.amount),
+          fileName: r.fileName || file.name,
+          modelUsed: r.modelUsed || ""
+        }));
+        (result.skipped || []).forEach(r => reviewMessages.push(
+          file.name + ": skipped possible invoice " + (r.invoiceNo || "UNKNOWN") +
+          " (" + (r.reason || "Missing fields") + "). Check statement and add it manually if needed."
+        ));
+        succeeded++;
+      } catch (error) {
+        reviewMessages.push(file.name + ": extraction failed — " + error.message);
+      }
+      showRows();
+    }
+    notify(succeeded + "/" + selectedFiles.length + " image(s) processed. Found " + invoiceRows.length +
+      " invoice(s)." + (reviewMessages.length ? "\nSome entries need review — see warnings below." : "\nReview/edit rows and click Save to Invoice Register."),
+      reviewMessages.length ? "warn" : "");
+  } finally {
+    setWorking(false);
+  }
+});
+$("addBtn").addEventListener("click", () => {
+  invoiceRows.push({invoiceDate:"", invoiceNo:"", amount:"", fileName:"Manual", modelUsed:""});
+  showRows();
+});
+$("saveBtn").addEventListener("click", async () => {
+  if (!invoiceRows.length || working) return;
+  try { validateRows(); } catch (error) { notify(error.message, "error"); return; }
+  setWorking(true);
+  notify("Saving " + invoiceRows.length + " invoice rows to Invoice Register...");
+  try {
+    const outcome = await api("saveInvoices", {results: invoiceRows});
+    notify("Save complete.\nNew rows saved: " + (outcome.saved || 0) +
+      "\nDuplicates skipped: " + (outcome.duplicatesSkipped || 0) +
+      "\nInvalid entries skipped: " + (outcome.invalidSkipped || 0) +
+      "\nSheet1 was not modified.", (outcome.invalidSkipped || 0) ? "warn" : "");
+  } catch (error) {
+    notify("Save failed: " + error.message, "error");
+  } finally {
+    setWorking(false);
+  }
+});
+function csvCell(value) { return '"' + String(value === null || value === undefined ? "" : value).replace(/"/g, '""') + '"'; }
+$("csvBtn").addEventListener("click", () => {
+  if (!invoiceRows.length) return;
+  const lines = [["Invoice Date","Invoice No","Amount (RM)","Source Filename"]]
+    .concat(invoiceRows.map(r => [r.invoiceDate, r.invoiceNo, r.amount, r.fileName]))
+    .map(items => items.map(csvCell).join(","));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url; link.download = "invoice_register.csv";
+  document.body.appendChild(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+</script>
+</body>
+</html>
